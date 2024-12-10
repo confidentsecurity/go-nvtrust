@@ -1,10 +1,7 @@
 package gonvtrust
 
 import (
-	"bytes"
-	"crypto/x509"
 	"encoding/base64"
-	"encoding/pem"
 	"fmt"
 
 	"github.com/NVIDIA/go-nvml/pkg/nvml"
@@ -86,13 +83,13 @@ func (g *GpuAttester) GetRemoteEvidence(nonce int) ([]RemoteEvidence, error) {
 		}
 
 		attestationCertChainData := certificate.AttestationCertChain[:certificate.AttestationCertChainSize]
-		certs := splitCertificates(attestationCertChainData)
-		err := verifyCertificateChain(certs)
+		certChain := NewCertChainFromData(attestationCertChainData)
+		err := certChain.verify()
 		if err != nil {
 			return nil, fmt.Errorf("Failed to verify certificate chain: %v", err)
 		}
 
-		encodedCertChain, err := convertAndBase64Encode(certs)
+		encodedCertChain, err := certChain.encodeBase64()
 		if err != nil {
 			return nil, fmt.Errorf("Failed to encode certificate chain: %v", err)
 		}
@@ -101,67 +98,4 @@ func (g *GpuAttester) GetRemoteEvidence(nonce int) ([]RemoteEvidence, error) {
 	}
 
 	return remoteEvidence, nil
-}
-
-func splitCertificates(chainData []byte) [][]byte {
-	var certs [][]byte
-	remainingData := chainData
-	for {
-		block, rest := pem.Decode(remainingData)
-		if block == nil {
-			break
-		}
-		certs = append(certs, block.Bytes)
-		remainingData = rest
-	}
-
-	return certs
-}
-
-func verifyCertificateChain(certs [][]byte) error {
-	var parsedCerts []*x509.Certificate
-
-	for _, certData := range certs {
-		cert, err := x509.ParseCertificate(certData)
-		if err != nil {
-			return fmt.Errorf("failed to parse certificate: %v", err)
-		}
-		parsedCerts = append(parsedCerts, cert)
-	}
-
-	if len(parsedCerts) < 2 {
-		return fmt.Errorf("certificate chain must contain at least two certificates")
-	}
-
-	roots := x509.NewCertPool()
-	intermediates := x509.NewCertPool()
-	for i, cert := range parsedCerts {
-		if i == len(parsedCerts)-1 {
-			roots.AddCert(cert)
-		} else {
-			intermediates.AddCert(cert)
-		}
-	}
-
-	opts := x509.VerifyOptions{
-		Roots:         roots,
-		Intermediates: intermediates,
-	}
-
-	_, err := parsedCerts[0].Verify(opts)
-	return err
-}
-
-func convertAndBase64Encode(certs [][]byte) (string, error) {
-	var pemBuffer bytes.Buffer
-	for _, certData := range certs {
-		err := pem.Encode(&pemBuffer, &pem.Block{Type: "CERTIFICATE", Bytes: certData})
-		if err != nil {
-			return "", fmt.Errorf("failed to encode certificate: %v", err)
-		}
-	}
-
-	base64PEM := base64.StdEncoding.EncodeToString(pemBuffer.Bytes())
-
-	return base64PEM, nil
 }
