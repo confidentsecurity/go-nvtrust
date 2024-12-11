@@ -15,42 +15,42 @@ var attestationReportData []byte
 type NvmlHandler interface {
 	Init() nvml.Return
 	DeviceGetCount() (int, nvml.Return)
-	DeviceGetHandleByIndex(i int) (NvmlDevice, nvml.Return)
+	DeviceGetHandleByIndex(i int) (NVMLDevice, nvml.Return)
 	SystemGetDriverVersion() (string, nvml.Return)
 	SystemGetConfComputeState() (nvml.ConfComputeSystemState, nvml.Return)
 }
 
-type NvmlHandlerImpl struct {
+type DefaultNVMLHandler struct {
 }
 
-func (n *NvmlHandlerImpl) Init() (ret nvml.Return) {
+func (*DefaultNVMLHandler) Init() nvml.Return {
 	return nvml.Init()
 }
 
-func (n *NvmlHandlerImpl) SystemGetConfComputeState() (nvml.ConfComputeSystemState, nvml.Return) {
+func (*DefaultNVMLHandler) SystemGetConfComputeState() (nvml.ConfComputeSystemState, nvml.Return) {
 	computeState, ret := nvml.SystemGetConfComputeState()
 	return computeState, ret
 }
 
-func (n *NvmlHandlerImpl) DeviceGetCount() (int, nvml.Return) {
+func (*DefaultNVMLHandler) DeviceGetCount() (int, nvml.Return) {
 	return nvml.DeviceGetCount()
 }
 
-func (n *NvmlHandlerImpl) DeviceGetHandleByIndex(i int) (NvmlDevice, nvml.Return) {
+func (*DefaultNVMLHandler) DeviceGetHandleByIndex(i int) (NVMLDevice, nvml.Return) {
 	d, ret := nvml.DeviceGetHandleByIndex(i)
 	if ret != nvml.SUCCESS {
 		return nil, ret
 	}
-	return &NvmlDeviceImpl{
+	return &DefaultNVMLDevice{
 		device: d,
 	}, nvml.SUCCESS
 }
 
-func (n *NvmlHandlerImpl) SystemGetDriverVersion() (string, nvml.Return) {
+func (*DefaultNVMLHandler) SystemGetDriverVersion() (string, nvml.Return) {
 	return nvml.SystemGetDriverVersion()
 }
 
-type NvmlDevice interface {
+type NVMLDevice interface {
 	GetDevice() nvml.Device
 	GetUUID() (string, nvml.Return)
 	GetBoardId() (uint32, nvml.Return)
@@ -60,88 +60,88 @@ type NvmlDevice interface {
 	GetConfComputeGpuCertificate() (nvml.ConfComputeGpuCertificate, nvml.Return)
 }
 
-type NvmlDeviceImpl struct {
+type DefaultNVMLDevice struct {
 	device nvml.Device
 }
 
-func (n *NvmlDeviceImpl) GetDevice() nvml.Device {
+func (n *DefaultNVMLDevice) GetDevice() nvml.Device {
 	return n.device
 }
 
-func (n *NvmlDeviceImpl) GetUUID() (string, nvml.Return) {
+func (n *DefaultNVMLDevice) GetUUID() (string, nvml.Return) {
 	return n.device.GetUUID()
 }
 
-func (n *NvmlDeviceImpl) GetBoardId() (uint32, nvml.Return) {
+func (n *DefaultNVMLDevice) GetBoardId() (uint32, nvml.Return) {
 	return nvml.DeviceGetBoardId(n.device)
 }
 
-func (n *NvmlDeviceImpl) GetArchitecture() (nvml.DeviceArchitecture, nvml.Return) {
+func (n *DefaultNVMLDevice) GetArchitecture() (nvml.DeviceArchitecture, nvml.Return) {
 	return nvml.DeviceGetArchitecture(n.device)
 }
 
-func (n *NvmlDeviceImpl) GetVbiosVersion() (string, nvml.Return) {
+func (n *DefaultNVMLDevice) GetVbiosVersion() (string, nvml.Return) {
 	return nvml.DeviceGetVbiosVersion(n.device)
 }
 
-func (n *NvmlDeviceImpl) GetConfComputeGpuAttestationReport() (nvml.ConfComputeGpuAttestationReport, nvml.Return) {
+func (n *DefaultNVMLDevice) GetConfComputeGpuAttestationReport() (nvml.ConfComputeGpuAttestationReport, nvml.Return) {
 	return nvml.DeviceGetConfComputeGpuAttestationReport(n.device)
 }
 
-func (n *NvmlDeviceImpl) GetConfComputeGpuCertificate() (nvml.ConfComputeGpuCertificate, nvml.Return) {
+func (n *DefaultNVMLDevice) GetConfComputeGpuCertificate() (nvml.ConfComputeGpuCertificate, nvml.Return) {
 	return nvml.DeviceGetConfComputeGpuCertificate(n.device)
 }
 
-type NvmlHandlerMock struct {
+type NVMLHandlerMock struct {
 }
 
-func (n *NvmlHandlerMock) Init() nvml.Return {
+func (n *NVMLHandlerMock) Init() nvml.Return {
 	return nvml.SUCCESS
 }
 
-func (n *NvmlHandlerMock) SystemGetConfComputeState() (nvml.ConfComputeSystemState, nvml.Return) {
+func (n *NVMLHandlerMock) SystemGetConfComputeState() (nvml.ConfComputeSystemState, nvml.Return) {
 
 	return nvml.ConfComputeSystemState{
 		CcFeature: 1,
 	}, nvml.SUCCESS
 }
 
-func (n *NvmlHandlerMock) DeviceGetCount() (int, nvml.Return) {
+func (n *NVMLHandlerMock) DeviceGetCount() (int, nvml.Return) {
 	return 1, nvml.SUCCESS
 }
 
-func (n *NvmlHandlerMock) DeviceGetHandleByIndex(i int) (NvmlDevice, nvml.Return) {
-	return &NvmlDeviceMock{}, nvml.SUCCESS
+func (n *NVMLHandlerMock) DeviceGetHandleByIndex(i int) (NVMLDevice, nvml.Return) {
+	return &NVMLDeviceMock{}, nvml.SUCCESS
 }
 
-func (n *NvmlHandlerMock) SystemGetDriverVersion() (string, nvml.Return) {
+func (n *NVMLHandlerMock) SystemGetDriverVersion() (string, nvml.Return) {
 	return "fake-driver-version", nvml.SUCCESS
 }
 
-type NvmlDeviceMock struct {
+type NVMLDeviceMock struct {
 }
 
-func (n *NvmlDeviceMock) GetDevice() nvml.Device {
+func (n *NVMLDeviceMock) GetDevice() nvml.Device {
 	return nil
 }
 
-func (n *NvmlDeviceMock) GetUUID() (string, nvml.Return) {
+func (n *NVMLDeviceMock) GetUUID() (string, nvml.Return) {
 	return "fake-uuid", nvml.SUCCESS
 }
 
-func (n *NvmlDeviceMock) GetBoardId() (uint32, nvml.Return) {
+func (n *NVMLDeviceMock) GetBoardId() (uint32, nvml.Return) {
 	return 1234, nvml.SUCCESS
 }
 
-func (n *NvmlDeviceMock) GetArchitecture() (nvml.DeviceArchitecture, nvml.Return) {
+func (n *NVMLDeviceMock) GetArchitecture() (nvml.DeviceArchitecture, nvml.Return) {
 	return nvml.DEVICE_ARCH_HOPPER, nvml.SUCCESS
 }
 
-func (n *NvmlDeviceMock) GetVbiosVersion() (string, nvml.Return) {
+func (n *NVMLDeviceMock) GetVbiosVersion() (string, nvml.Return) {
 	return "fake-vbios-version", nvml.SUCCESS
 }
 
-func (n *NvmlDeviceMock) GetConfComputeGpuAttestationReport() (nvml.ConfComputeGpuAttestationReport, nvml.Return) {
+func (n *NVMLDeviceMock) GetConfComputeGpuAttestationReport() (nvml.ConfComputeGpuAttestationReport, nvml.Return) {
 	var reportArray [8192]uint8
 	copy(reportArray[:], attestationReportData)
 
@@ -152,7 +152,7 @@ func (n *NvmlDeviceMock) GetConfComputeGpuAttestationReport() (nvml.ConfComputeG
 	return attestationReport, nvml.SUCCESS
 }
 
-func (n *NvmlDeviceMock) GetConfComputeGpuCertificate() (nvml.ConfComputeGpuCertificate, nvml.Return) {
+func (n *NVMLDeviceMock) GetConfComputeGpuCertificate() (nvml.ConfComputeGpuCertificate, nvml.Return) {
 	var certArray [5120]uint8
 	copy(certArray[:], certChainData)
 
