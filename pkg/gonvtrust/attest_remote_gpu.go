@@ -8,8 +8,8 @@ import (
 )
 
 type RemoteEvidence struct {
-	certificate string
-	evidence    string
+	Certificate string
+	Evidence    string
 }
 
 type GpuAttester struct {
@@ -28,7 +28,7 @@ func NewGpuAttester(testMode bool) *GpuAttester {
 	}
 }
 
-func (g *GpuAttester) GetRemoteEvidence(nonce int) ([]RemoteEvidence, error) {
+func (g *GpuAttester) GetRemoteEvidence(nonce []byte) ([]RemoteEvidence, error) {
 	ret := g.nvmlHandler.Init()
 
 	if ret != nvml.SUCCESS {
@@ -58,6 +58,7 @@ func (g *GpuAttester) GetRemoteEvidence(nonce int) ([]RemoteEvidence, error) {
 		}
 
 		deviceArchitecture, ret := device.GetArchitecture()
+
 		if ret != nvml.SUCCESS {
 			return nil, fmt.Errorf("unable to get architecture of device at index %d: %v", i, nvml.ErrorString(ret))
 		}
@@ -66,7 +67,7 @@ func (g *GpuAttester) GetRemoteEvidence(nonce int) ([]RemoteEvidence, error) {
 			return nil, fmt.Errorf("device at index %d is not supported", i)
 		}
 
-		report, ret := device.GetConfComputeGpuAttestationReport()
+		report, ret := device.GetConfComputeGpuAttestationReport(nonce)
 
 		if ret != nvml.SUCCESS {
 			return nil, fmt.Errorf("unable to get attestation report of device at index %d: %v", i, nvml.ErrorString(ret))
@@ -94,7 +95,7 @@ func (g *GpuAttester) GetRemoteEvidence(nonce int) ([]RemoteEvidence, error) {
 			return nil, fmt.Errorf("failed to encode certificate chain: %v", err)
 		}
 
-		remoteEvidence = append(remoteEvidence, RemoteEvidence{evidence: encodedAttestationReport, certificate: encodedCertChain})
+		remoteEvidence = append(remoteEvidence, RemoteEvidence{Evidence: encodedAttestationReport, Certificate: encodedCertChain})
 	}
 
 	return remoteEvidence, nil
