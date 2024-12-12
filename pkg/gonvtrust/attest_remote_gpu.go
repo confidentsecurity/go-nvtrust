@@ -8,8 +8,8 @@ import (
 )
 
 type RemoteEvidence struct {
-	certificate string
-	evidence    string
+	Certificate string
+	Evidence    string
 }
 
 type GpuAttester struct {
@@ -94,7 +94,7 @@ func (g *GpuAttester) GetRemoteEvidence(nonce int) ([]RemoteEvidence, error) {
 			return nil, fmt.Errorf("failed to encode certificate chain: %v", err)
 		}
 
-		remoteEvidence = append(remoteEvidence, RemoteEvidence{evidence: encodedAttestationReport, certificate: encodedCertChain})
+		remoteEvidence = append(remoteEvidence, RemoteEvidence{Evidence: encodedAttestationReport, Certificate: encodedCertChain})
 	}
 
 	return remoteEvidence, nil
