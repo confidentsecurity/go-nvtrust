@@ -85,7 +85,7 @@ func (n *DefaultNVMLDevice) GetVbiosVersion() (string, nvml.Return) {
 }
 
 func (n *DefaultNVMLDevice) GetConfComputeGpuAttestationReport(nonce []byte) (nvml.ConfComputeGpuAttestationReport, nvml.Return) {
-	return nvml.DeviceGetConfComputeGpuAttestationReport(n.device, nonce)
+	return nvml.DeviceGetConfComputeGpuAttestationReportWithNonce(n.device, nonce)
 }
 
 func (n *DefaultNVMLDevice) GetConfComputeGpuCertificate() (nvml.ConfComputeGpuCertificate, nvml.Return) {
