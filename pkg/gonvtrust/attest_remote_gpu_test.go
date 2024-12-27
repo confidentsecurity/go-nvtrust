@@ -82,6 +82,13 @@ func (m *MockNvmlDevice) GetConfComputeGpuCertificate() (nvml.ConfComputeGpuCert
 	return m.NVMLDeviceMock.GetConfComputeGpuCertificate()
 }
 
+func TestNewGpuAttester(t *testing.T) {
+	attester := NewGpuAttester(false)
+
+	assert.NotNil(t, attester)
+	assert.IsType(t, &GpuAttester{}, attester)
+}
+
 func TestGetRemoteEvidence_Success(t *testing.T) {
 	mockHandler := &MockNvmlHandler{
 		mockDevice: &MockNvmlDevice{},
@@ -99,6 +106,84 @@ func TestGetRemoteEvidence_Success(t *testing.T) {
 func TestGetRemoteEvidence_InitFailure(t *testing.T) {
 	mockHandler := &MockNvmlHandler{
 		initFunc: func() nvml.Return { return nvml.ERROR_UNKNOWN },
+	}
+
+	attester := &GpuAttester{nvmlHandler: mockHandler}
+
+	evidence, err := attester.GetRemoteEvidence([]byte{})
+
+	assert.Error(t, err)
+	assert.EqualError(t, err, "unable to initialize NVML: ERROR_UNKNOWN")
+	assert.Nil(t, evidence)
+}
+
+func TestGetRemoteEvidence_GetSystemStateFailure(t *testing.T) {
+	mockHandler := &MockNvmlHandler{
+		systemGetConfComputeStateFunc: func() (nvml.ConfComputeSystemState, nvml.Return) {
+			return nvml.ConfComputeSystemState{}, nvml.ERROR_UNKNOWN
+		},
+	}
+
+	attester := &GpuAttester{nvmlHandler: mockHandler}
+
+	evidence, err := attester.GetRemoteEvidence([]byte{})
+
+	assert.Error(t, err)
+	assert.EqualError(t, err, "unable to get compute state: ERROR_UNKNOWN")
+	assert.Nil(t, evidence)
+}
+
+func TestGetRemoteEvidence_ComputeStateNotEnabled(t *testing.T) {
+	mockHandler := &MockNvmlHandler{
+		systemGetConfComputeStateFunc: func() (nvml.ConfComputeSystemState, nvml.Return) {
+			return nvml.ConfComputeSystemState{CcFeature: nvml.CC_SYSTEM_FEATURE_DISABLED}, nvml.SUCCESS
+		},
+	}
+
+	attester := &GpuAttester{nvmlHandler: mockHandler}
+
+	evidence, err := attester.GetRemoteEvidence([]byte{})
+
+	assert.Error(t, err)
+	assert.EqualError(t, err, "confidential computing is not enabled")
+	assert.Nil(t, evidence)
+}
+
+func TestGetRemoteEvidence_GetDeviceCountFailure(t *testing.T) {
+	mockHandler := &MockNvmlHandler{
+		deviceGetCountFunc: func() (int, nvml.Return) { return 0, nvml.ERROR_UNKNOWN },
+	}
+
+	attester := &GpuAttester{nvmlHandler: mockHandler}
+
+	evidence, err := attester.GetRemoteEvidence([]byte{})
+
+	assert.Error(t, err)
+	assert.EqualError(t, err, "unable to get device count: ERROR_UNKNOWN")
+	assert.Nil(t, evidence)
+}
+
+func TestGetRemoteEvidence_GetDeviceHandleByIndexFailure(t *testing.T) {
+	mockHandler := &MockNvmlHandler{
+		deviceGetHandleByIndexFunc: func(index int) (NVMLDevice, nvml.Return) { return nil, nvml.ERROR_UNKNOWN },
+	}
+
+	attester := &GpuAttester{nvmlHandler: mockHandler}
+
+	evidence, err := attester.GetRemoteEvidence([]byte{})
+
+	assert.Error(t, err)
+	assert.EqualError(t, err, "unable to get device at index 0: ERROR_UNKNOWN")
+	assert.Nil(t, evidence)
+}
+
+func TestGetRemoteEvidence_GetAttestationReportFailure(t *testing.T) {
+	mockHandler := &MockNvmlHandler{
+		mockDevice: &MockNvmlDevice{
+			getConfComputeGpuAttestationReportFunc: func() (nvml.ConfComputeGpuAttestationReport, nvml.Return) {
+				return nvml.ConfComputeGpuAttestationReport{}, nvml.ERROR_UNKNOWN
+			},
+		},
 	}
 
 	attester := &GpuAttester{nvmlHandler: mockHandler}
