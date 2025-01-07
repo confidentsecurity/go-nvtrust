@@ -11,4 +11,4 @@ require (
 	gopkg.in/yaml.v3 v3.0.1 // indirect
 )
 
-replace github.com/NVIDIA/go-nvml => github.com/yoihito/go-nvml v0.0.0-20241220151549-c893db3ceb12
+replace github.com/NVIDIA/go-nvml => github.com/yoihito/go-nvml v0.0.0-20241224135837-9ffaf6351622
