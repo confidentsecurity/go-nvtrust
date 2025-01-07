@@ -1,4 +1,4 @@
-// go:build gpu_integration
+//go:build gpu_integration
 
 package gonvtrust
 
