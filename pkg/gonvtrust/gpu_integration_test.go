@@ -1,6 +1,6 @@
 //go:build gpu_integration
 
-package gonvtrust
+package gonvtrust_test
 
 import (
 	"crypto/rand"

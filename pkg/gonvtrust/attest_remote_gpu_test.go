@@ -1,19 +1,20 @@
-package gonvtrust
+package gonvtrust_test
 
 import (
 	_ "embed"
 	"testing"
 
 	"github.com/NVIDIA/go-nvml/pkg/nvml"
+	"github.com/confidentsecurity/go-nvtrust/pkg/gonvtrust"
 	"github.com/stretchr/testify/assert"
 )
 
 type MockNvmlHandler struct {
-	NVMLHandlerMock
+	gonvtrust.NVMLHandlerMock
 
 	initFunc                      func() nvml.Return
 	deviceGetCountFunc            func() (int, nvml.Return)
-	deviceGetHandleByIndexFunc    func(index int) (NVMLDevice, nvml.Return)
+	deviceGetHandleByIndexFunc    func(index int) (gonvtrust.NVMLDevice, nvml.Return)
 	systemGetConfComputeStateFunc func() (nvml.ConfComputeSystemState, nvml.Return)
 	mockDevice                    *MockNvmlDevice
 }
@@ -42,7 +43,7 @@ func (m *MockNvmlHandler) DeviceGetCount() (int, nvml.Return) {
 	return m.NVMLHandlerMock.DeviceGetCount()
 }
 
-func (m *MockNvmlHandler) DeviceGetHandleByIndex(index int) (NVMLDevice, nvml.Return) {
+func (m *MockNvmlHandler) DeviceGetHandleByIndex(index int) (gonvtrust.NVMLDevice, nvml.Return) {
 	if m.deviceGetHandleByIndexFunc != nil {
 		return m.deviceGetHandleByIndexFunc(index)
 	}
@@ -54,7 +55,7 @@ func (m *MockNvmlHandler) SystemGetDriverVersion() (string, nvml.Return) {
 }
 
 type MockNvmlDevice struct {
-	NVMLDeviceMock
+	gonvtrust.NVMLDeviceMock
 
 	getArchitectureFunc                    func() (nvml.DeviceArchitecture, nvml.Return)
 	getConfComputeGpuAttestationReportFunc func() (nvml.ConfComputeGpuAttestationReport, nvml.Return)
@@ -83,10 +84,10 @@ func (m *MockNvmlDevice) GetConfComputeGpuCertificate() (nvml.ConfComputeGpuCert
 }
 
 func TestNewGpuAttester(t *testing.T) {
-	attester := NewGpuAttester(false)
+	attester := gonvtrust.NewGpuAttester(nil)
 
 	assert.NotNil(t, attester)
-	assert.IsType(t, &GpuAttester{}, attester)
+	assert.IsType(t, &gonvtrust.GpuAttester{}, attester)
 }
 
 func TestGetRemoteEvidence_Success(t *testing.T) {
@@ -94,7 +95,7 @@ func TestGetRemoteEvidence_Success(t *testing.T) {
 		mockDevice: &MockNvmlDevice{},
 	}
 
-	attester := &GpuAttester{nvmlHandler: mockHandler}
+	attester := gonvtrust.NewGpuAttester(mockHandler)
 
 	evidence, err := attester.GetRemoteEvidence([]byte{})
 
@@ -108,7 +109,7 @@ func TestGetRemoteEvidence_InitFailure(t *testing.T) {
 		initFunc: func() nvml.Return { return nvml.ERROR_UNKNOWN },
 	}
 
-	attester := &GpuAttester{nvmlHandler: mockHandler}
+	attester := gonvtrust.NewGpuAttester(mockHandler)
 
 	evidence, err := attester.GetRemoteEvidence([]byte{})
 
@@ -124,7 +125,7 @@ func TestGetRemoteEvidence_GetSystemStateFailure(t *testing.T) {
 		},
 	}
 
-	attester := &GpuAttester{nvmlHandler: mockHandler}
+	attester := gonvtrust.NewGpuAttester(mockHandler)
 
 	evidence, err := attester.GetRemoteEvidence([]byte{})
 
@@ -140,7 +141,7 @@ func TestGetRemoteEvidence_ComputeStateNotEnabled(t *testing.T) {
 		},
 	}
 
-	attester := &GpuAttester{nvmlHandler: mockHandler}
+	attester := gonvtrust.NewGpuAttester(mockHandler)
 
 	evidence, err := attester.GetRemoteEvidence([]byte{})
 
@@ -154,7 +155,7 @@ func TestGetRemoteEvidence_GetDeviceCountFailure(t *testing.T) {
 		deviceGetCountFunc: func() (int, nvml.Return) { return 0, nvml.ERROR_UNKNOWN },
 	}
 
-	attester := &GpuAttester{nvmlHandler: mockHandler}
+	attester := gonvtrust.NewGpuAttester(mockHandler)
 
 	evidence, err := attester.GetRemoteEvidence([]byte{})
 
@@ -165,10 +166,10 @@ func TestGetRemoteEvidence_GetDeviceCountFailure(t *testing.T) {
 
 func TestGetRemoteEvidence_GetDeviceHandleByIndexFailure(t *testing.T) {
 	mockHandler := &MockNvmlHandler{
-		deviceGetHandleByIndexFunc: func(index int) (NVMLDevice, nvml.Return) { return nil, nvml.ERROR_UNKNOWN },
+		deviceGetHandleByIndexFunc: func(index int) (gonvtrust.NVMLDevice, nvml.Return) { return nil, nvml.ERROR_UNKNOWN },
 	}
 
-	attester := &GpuAttester{nvmlHandler: mockHandler}
+	attester := gonvtrust.NewGpuAttester(mockHandler)
 
 	evidence, err := attester.GetRemoteEvidence([]byte{})
 
@@ -186,7 +187,7 @@ func TestGetRemoteEvidence_GetAttestationReportFailure(t *testing.T) {
 		},
 	}
 
-	attester := &GpuAttester{nvmlHandler: mockHandler}
+	attester := gonvtrust.NewGpuAttester(mockHandler)
 
 	evidence, err := attester.GetRemoteEvidence([]byte{})
 
@@ -201,7 +202,7 @@ func TestGetRemoteEvidence_FailedToRetrieveArchitecture(t *testing.T) {
 		},
 	}
 
-	attester := &GpuAttester{nvmlHandler: mockHandler}
+	attester := gonvtrust.NewGpuAttester(mockHandler)
 
 	evidence, err := attester.GetRemoteEvidence([]byte{})
 
@@ -216,7 +217,7 @@ func TestGetRemoteEvidence_ArchitectureNotSupported(t *testing.T) {
 		},
 	}
 
-	attester := &GpuAttester{nvmlHandler: mockHandler}
+	attester := gonvtrust.NewGpuAttester(mockHandler)
 
 	evidence, err := attester.GetRemoteEvidence([]byte{})
 
@@ -233,7 +234,7 @@ func TestGetRemoteEvidence_CertificateRetrievalFailure(t *testing.T) {
 		},
 	}
 
-	attester := &GpuAttester{nvmlHandler: mockHandler}
+	attester := gonvtrust.NewGpuAttester(mockHandler)
 
 	evidence, err := attester.GetRemoteEvidence([]byte{})
 
@@ -259,7 +260,7 @@ func TestGetRemoteEvidence_InvalidCertificateFailure(t *testing.T) {
 		},
 	}
 
-	attester := &GpuAttester{nvmlHandler: mockHandler}
+	attester := gonvtrust.NewGpuAttester(mockHandler)
 
 	evidence, err := attester.GetRemoteEvidence([]byte{})
 
