@@ -7,7 +7,7 @@ import (
 )
 
 //go:embed mocks/gpuAkCertChain.txt
-var certChainData []byte
+var validCertChainData []byte
 
 //go:embed mocks/attestationReport.txt
 var attestationReportData []byte
@@ -56,7 +56,7 @@ type NVMLDevice interface {
 	GetBoardId() (uint32, nvml.Return)
 	GetArchitecture() (nvml.DeviceArchitecture, nvml.Return)
 	GetVbiosVersion() (string, nvml.Return)
-	GetConfComputeGpuAttestationReport() (nvml.ConfComputeGpuAttestationReport, nvml.Return)
+	GetConfComputeGpuAttestationReport(nonce []byte) (nvml.ConfComputeGpuAttestationReport, nvml.Return)
 	GetConfComputeGpuCertificate() (nvml.ConfComputeGpuCertificate, nvml.Return)
 }
 
@@ -84,8 +84,8 @@ func (n *DefaultNVMLDevice) GetVbiosVersion() (string, nvml.Return) {
 	return nvml.DeviceGetVbiosVersion(n.device)
 }
 
-func (n *DefaultNVMLDevice) GetConfComputeGpuAttestationReport() (nvml.ConfComputeGpuAttestationReport, nvml.Return) {
-	return nvml.DeviceGetConfComputeGpuAttestationReport(n.device)
+func (n *DefaultNVMLDevice) GetConfComputeGpuAttestationReport(nonce []byte) (nvml.ConfComputeGpuAttestationReport, nvml.Return) {
+	return nvml.DeviceGetConfComputeGpuAttestationReportWithNonce(n.device, nonce)
 }
 
 func (n *DefaultNVMLDevice) GetConfComputeGpuCertificate() (nvml.ConfComputeGpuCertificate, nvml.Return) {
@@ -141,7 +141,7 @@ func (n *NVMLDeviceMock) GetVbiosVersion() (string, nvml.Return) {
 	return "fake-vbios-version", nvml.SUCCESS
 }
 
-func (n *NVMLDeviceMock) GetConfComputeGpuAttestationReport() (nvml.ConfComputeGpuAttestationReport, nvml.Return) {
+func (n *NVMLDeviceMock) GetConfComputeGpuAttestationReport(nonce []byte) (nvml.ConfComputeGpuAttestationReport, nvml.Return) {
 	var reportArray [8192]uint8
 	copy(reportArray[:], attestationReportData)
 
@@ -154,11 +154,11 @@ func (n *NVMLDeviceMock) GetConfComputeGpuAttestationReport() (nvml.ConfComputeG
 
 func (n *NVMLDeviceMock) GetConfComputeGpuCertificate() (nvml.ConfComputeGpuCertificate, nvml.Return) {
 	var certArray [5120]uint8
-	copy(certArray[:], certChainData)
+	copy(certArray[:], validCertChainData)
 
 	certificate := nvml.ConfComputeGpuCertificate{
 		AttestationCertChain:     certArray,
-		AttestationCertChainSize: uint32(len(certChainData)),
+		AttestationCertChainSize: uint32(len(validCertChainData)),
 	}
 	return certificate, nvml.SUCCESS
 }
