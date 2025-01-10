@@ -16,15 +16,12 @@ type GpuAttester struct {
 	nvmlHandler NvmlHandler
 }
 
-func NewGpuAttester(testMode bool) *GpuAttester {
-	if testMode {
-		return &GpuAttester{
-			nvmlHandler: &NVMLHandlerMock{},
-		}
+func NewGpuAttester(h NvmlHandler) *GpuAttester {
+	if h == nil {
+		h = &DefaultNVMLHandler{}
 	}
-
 	return &GpuAttester{
-		nvmlHandler: &DefaultNVMLHandler{},
+		nvmlHandler: h,
 	}
 }
 
