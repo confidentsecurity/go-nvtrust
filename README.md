@@ -1,5 +1,7 @@
 # go-nvtrust
 
+WIP intended to mirror the functionality of https://github.com/nvidia/nvtrust in golang.
+
 ## Tests
 
 ```
