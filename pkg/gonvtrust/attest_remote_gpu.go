@@ -68,7 +68,6 @@ func (g *GpuAttester) GetRemoteEvidence(nonce []byte) ([]RemoteEvidence, error) 
 
 		if ret != nvml.SUCCESS {
 			return nil, fmt.Errorf("unable to get attestation report of device at index %d: %v", i, nvml.ErrorString(ret))
-
 		}
 
 		attestationReportData := report.AttestationReport[:report.AttestationReportSize]
