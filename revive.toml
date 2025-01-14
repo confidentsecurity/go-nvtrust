@@ -1,0 +1,45 @@
+ignoreGeneratedHeader = false
+severity = "warning"
+confidence = 0.8
+errorCode = 1
+warningCode = 1
+
+enableAllRules = true
+
+[rule.line-length-limit]
+Exclude = ["TEST"]
+disabled = true
+
+[rule.add-constant]
+Exclude = ["TEST"]
+disabled = true
+
+[rule.exported]
+disabled = true
+
+[rule.cognitive-complexity]
+disabled = true
+
+[rule.function-length]
+Exclude = ["TEST"]
+disabled = true
+
+[rule.package-comments]
+disabled = true
+
+[rule.cyclomatic]
+Exclude = ["TEST"]
+disabled = true
+
+[rule.import-shadowing]
+Exclude = ["TEST"]
+
+[rule.max-public-structs]
+disabled = true
+
+[rule.unhandled-error]
+arguments = ["fmt.Println", "fmt.Print", "fmt.Printf"]
+Exclude = ["TEST"]
+
+[rule.flag-parameter]
+disabled = true
