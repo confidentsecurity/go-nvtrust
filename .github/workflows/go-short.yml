@@ -9,7 +9,7 @@ jobs:
         uses: actions/setup-go@v5
         with:
           go-version: "1.22.x"
-      - name: Install RunRevive Linter
+      - name: Install Run Revive Linter
         run: go install -v github.com/mgechev/revive@latest
       - name: Run Revive Linter
         run: revive -formatter friendly -config revive.toml ./...
