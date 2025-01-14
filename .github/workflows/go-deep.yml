@@ -8,13 +8,7 @@ jobs:
       - name: Set up Go
         uses: actions/setup-go@v5
         with:
-          go-version: "1.23.x"
-      - name: Configure Go private modules
-        run: |
-          git config --global url."https://$GITHUB_ACCESS_TOKEN@github.com/".insteadOf "https://github.com/"
-        env:
-          GOPRIVATE: github.com/confidentsecurity/*
-          GITHUB_ACCESS_TOKEN: ${{ secrets.ACTIONS_PAT }}
+          go-version: "1.22.x"
       - name: Go Environment
         run: go env
       - name: Verify Go Modules
