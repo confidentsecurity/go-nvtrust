@@ -53,7 +53,7 @@ func (*DefaultNVMLHandler) SystemGetDriverVersion() (string, nvml.Return) {
 type NVMLDevice interface {
 	GetDevice() nvml.Device
 	GetUUID() (string, nvml.Return)
-	GetBoardId() (uint32, nvml.Return)
+	GetBoardID() (uint32, nvml.Return)
 	GetArchitecture() (nvml.DeviceArchitecture, nvml.Return)
 	GetVbiosVersion() (string, nvml.Return)
 	GetConfComputeGpuAttestationReport(nonce []byte) (nvml.ConfComputeGpuAttestationReport, nvml.Return)
@@ -72,7 +72,7 @@ func (n *DefaultNVMLDevice) GetUUID() (string, nvml.Return) {
 	return n.device.GetUUID()
 }
 
-func (n *DefaultNVMLDevice) GetBoardId() (uint32, nvml.Return) {
+func (n *DefaultNVMLDevice) GetBoardID() (uint32, nvml.Return) {
 	return nvml.DeviceGetBoardId(n.device)
 }
 
@@ -95,53 +95,52 @@ func (n *DefaultNVMLDevice) GetConfComputeGpuCertificate() (nvml.ConfComputeGpuC
 type NVMLHandlerMock struct {
 }
 
-func (n *NVMLHandlerMock) Init() nvml.Return {
+func (*NVMLHandlerMock) Init() nvml.Return {
 	return nvml.SUCCESS
 }
 
-func (n *NVMLHandlerMock) SystemGetConfComputeState() (nvml.ConfComputeSystemState, nvml.Return) {
-
+func (*NVMLHandlerMock) SystemGetConfComputeState() (nvml.ConfComputeSystemState, nvml.Return) {
 	return nvml.ConfComputeSystemState{
 		CcFeature: 1,
 	}, nvml.SUCCESS
 }
 
-func (n *NVMLHandlerMock) DeviceGetCount() (int, nvml.Return) {
+func (*NVMLHandlerMock) DeviceGetCount() (int, nvml.Return) {
 	return 1, nvml.SUCCESS
 }
 
-func (n *NVMLHandlerMock) DeviceGetHandleByIndex(i int) (NVMLDevice, nvml.Return) {
+func (*NVMLHandlerMock) DeviceGetHandleByIndex(int) (NVMLDevice, nvml.Return) {
 	return &NVMLDeviceMock{}, nvml.SUCCESS
 }
 
-func (n *NVMLHandlerMock) SystemGetDriverVersion() (string, nvml.Return) {
+func (*NVMLHandlerMock) SystemGetDriverVersion() (string, nvml.Return) {
 	return "fake-driver-version", nvml.SUCCESS
 }
 
 type NVMLDeviceMock struct {
 }
 
-func (n *NVMLDeviceMock) GetDevice() nvml.Device {
+func (*NVMLDeviceMock) GetDevice() nvml.Device {
 	return nil
 }
 
-func (n *NVMLDeviceMock) GetUUID() (string, nvml.Return) {
+func (*NVMLDeviceMock) GetUUID() (string, nvml.Return) {
 	return "fake-uuid", nvml.SUCCESS
 }
 
-func (n *NVMLDeviceMock) GetBoardId() (uint32, nvml.Return) {
+func (*NVMLDeviceMock) GetBoardID() (uint32, nvml.Return) {
 	return 1234, nvml.SUCCESS
 }
 
-func (n *NVMLDeviceMock) GetArchitecture() (nvml.DeviceArchitecture, nvml.Return) {
+func (*NVMLDeviceMock) GetArchitecture() (nvml.DeviceArchitecture, nvml.Return) {
 	return nvml.DEVICE_ARCH_HOPPER, nvml.SUCCESS
 }
 
-func (n *NVMLDeviceMock) GetVbiosVersion() (string, nvml.Return) {
+func (*NVMLDeviceMock) GetVbiosVersion() (string, nvml.Return) {
 	return "fake-vbios-version", nvml.SUCCESS
 }
 
-func (n *NVMLDeviceMock) GetConfComputeGpuAttestationReport(nonce []byte) (nvml.ConfComputeGpuAttestationReport, nvml.Return) {
+func (*NVMLDeviceMock) GetConfComputeGpuAttestationReport([]byte) (nvml.ConfComputeGpuAttestationReport, nvml.Return) {
 	var reportArray [8192]uint8
 	copy(reportArray[:], attestationReportData)
 
@@ -152,7 +151,7 @@ func (n *NVMLDeviceMock) GetConfComputeGpuAttestationReport(nonce []byte) (nvml.
 	return attestationReport, nvml.SUCCESS
 }
 
-func (n *NVMLDeviceMock) GetConfComputeGpuCertificate() (nvml.ConfComputeGpuCertificate, nvml.Return) {
+func (*NVMLDeviceMock) GetConfComputeGpuCertificate() (nvml.ConfComputeGpuCertificate, nvml.Return) {
 	var certArray [5120]uint8
 	copy(certArray[:], validCertChainData)
 
