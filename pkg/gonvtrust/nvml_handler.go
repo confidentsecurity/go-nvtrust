@@ -53,7 +53,7 @@ func (*DefaultNVMLHandler) SystemGetDriverVersion() (string, nvml.Return) {
 type NVMLDevice interface {
 	GetDevice() nvml.Device
 	GetUUID() (string, nvml.Return)
-	GetBoardId() (uint32, nvml.Return)
+	GetBoardID() (uint32, nvml.Return)
 	GetArchitecture() (nvml.DeviceArchitecture, nvml.Return)
 	GetVbiosVersion() (string, nvml.Return)
 	GetConfComputeGpuAttestationReport(nonce []byte) (nvml.ConfComputeGpuAttestationReport, nvml.Return)
