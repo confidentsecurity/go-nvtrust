@@ -2,6 +2,7 @@ package gonvtrust
 
 import (
 	"encoding/base64"
+	"errors"
 	"fmt"
 
 	"github.com/NVIDIA/go-nvml/pkg/nvml"
@@ -37,7 +38,7 @@ func (g *GpuAttester) GetRemoteEvidence(nonce []byte) ([]RemoteEvidence, error) 
 		return nil, fmt.Errorf("unable to get compute state: %v", nvml.ErrorString(ret))
 	}
 	if computeState.CcFeature != nvml.CC_SYSTEM_FEATURE_ENABLED {
-		return nil, fmt.Errorf("confidential computing is not enabled")
+		return nil, errors.New("confidential computing is not enabled")
 	}
 
 	count, ret := g.nvmlHandler.DeviceGetCount()

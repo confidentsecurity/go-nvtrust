@@ -5,6 +5,7 @@ import (
 	"crypto/x509"
 	"encoding/base64"
 	"encoding/pem"
+	"errors"
 	"fmt"
 )
 
@@ -39,7 +40,7 @@ func (c *CertChain) verify() error {
 	}
 
 	if len(parsedCerts) < 2 {
-		return fmt.Errorf("certificate chain must contain at least two certificates")
+		return errors.New("certificate chain must contain at least two certificates")
 	}
 
 	roots := x509.NewCertPool()
