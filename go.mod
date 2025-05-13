@@ -1,8 +1,19 @@
 module github.com/confidentsecurity/go-nvtrust
 
-go 1.22.0
+go 1.23.0
 
-require github.com/NVIDIA/go-nvml v0.12.4-0
+toolchain go1.23.4
+
+require (
+	github.com/MicahParks/keyfunc/v3 v3.3.11
+	github.com/NVIDIA/go-nvml v0.12.4-0
+	github.com/golang-jwt/jwt/v5 v5.2.2
+)
+
+require (
+	github.com/MicahParks/jwkset v0.8.0 // indirect
+	golang.org/x/time v0.9.0 // indirect
+)
 
 require (
 	github.com/davecgh/go-spew v1.1.1 // indirect
@@ -11,4 +22,4 @@ require (
 	gopkg.in/yaml.v3 v3.0.1 // indirect
 )
 
-replace github.com/NVIDIA/go-nvml => github.com/confidentsecurity/go-nvml v0.0.0-20250102214226-9a52cebf0382
+replace github.com/NVIDIA/go-nvml => github.com/confidentsecurity/go-nvml v0.0.0-20250113141620-97f6be2384c0
