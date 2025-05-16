@@ -15,21 +15,132 @@ import (
 	"github.com/golang-jwt/jwt/v5"
 )
 
+type AttestationVerifier interface {
+	RequestRemoteAttestation(ctx context.Context, request *GPUAttestationRequest) (*GPUAttestationResponse, error)
+	VerifyJWT(ctx context.Context, signedToken string) (*jwt.Token, error)
+}
+
+type NRASVerifier struct {
+	remoteGpuVerifierURL string
+}
+
+func NewNRASVerifier() *NRASVerifier {
+	return &NRASVerifier{
+		remoteGpuVerifierURL: "https://nras.attestation.nvidia.com",
+	}
+}
+
+func (v *NRASVerifier) RequestRemoteAttestation(ctx context.Context, request *GPUAttestationRequest) (*GPUAttestationResponse, error) {
+	jsonRequest, err := json.Marshal(request)
+	if err != nil {
+		return nil, fmt.Errorf("failed to marshal request: %v", err)
+	}
+
+	fmt.Printf("jsonRequest: %s\n", string(jsonRequest))
+
+	req, err := http.NewRequestWithContext(ctx, "POST", v.remoteGpuVerifierURL+"/v3/attest/gpu", bytes.NewBuffer(jsonRequest))
+	if err != nil {
+		return nil, fmt.Errorf("failed to create request: %v", err)
+	}
+	req.Header.Set("Content-Type", "application/json")
+
+	response, err := http.DefaultClient.Do(req)
+	if err != nil {
+		return nil, fmt.Errorf("failed to send request: %v", err)
+	}
+
+	defer response.Body.Close()
+
+	body, err := io.ReadAll(response.Body)
+	if err != nil {
+		return nil, fmt.Errorf("failed to read response body: %v", err)
+	}
+
+	if response.StatusCode != http.StatusOK {
+		return nil, fmt.Errorf("failed to attest: %v", response.Status)
+	}
+
+	var rawResponse []any
+	err = json.Unmarshal(body, &rawResponse)
+	if err != nil {
+		return nil, fmt.Errorf("failed to unmarshal response: %v", err)
+	}
+
+	if len(rawResponse) != 2 {
+		return nil, errors.New("unexpected response format")
+	}
+
+	attestResult := &GPUAttestationResponse{
+		DeviceJWTs: make(map[string]string),
+	}
+
+	jwtArray, ok := rawResponse[0].([]any)
+	if ok && len(jwtArray) >= 2 {
+		for _, item := range jwtArray {
+			if str, ok := item.(string); ok {
+				attestResult.JWTData = append(attestResult.JWTData, str)
+			}
+		}
+	}
+
+	gpuTokens, ok := rawResponse[1].(map[string]any)
+	if ok {
+		for key, value := range gpuTokens {
+			if str, ok := value.(string); ok {
+				attestResult.DeviceJWTs[key] = str
+			}
+		}
+	}
+
+	return attestResult, nil
+}
+
+func (v *NRASVerifier) VerifyJWT(ctx context.Context, signedToken string) (*jwt.Token, error) {
+	k, err := keyfunc.NewDefaultCtx(ctx, []string{v.remoteGpuVerifierURL + "/.well-known/jwks.json"})
+	if err != nil {
+		return nil, fmt.Errorf("failed to create a keyfunc.Keyfunc from the server's URL.\nError: %s", err)
+	}
+	parsed, err := jwt.Parse(signedToken, k.Keyfunc)
+	if err != nil {
+		return nil, fmt.Errorf("failed to parse the JWT.\nError: %s", err)
+	}
+
+	return parsed, nil
+}
+
 type RemoteEvidence struct {
 	Certificate string `json:"certificate"`
 	Evidence    string `json:"evidence"`
 }
 
 type GpuAttester struct {
-	nvmlHandler NvmlHandler
+	nvmlHandler         NvmlHandler
+	attestationVerifier AttestationVerifier
 }
 
 func NewGpuAttester(h NvmlHandler) *GpuAttester {
 	if h == nil {
 		h = &DefaultNVMLHandler{}
 	}
+
 	return &GpuAttester{
-		nvmlHandler: h,
+		nvmlHandler:         h,
+		attestationVerifier: NewNRASVerifier(),
+	}
+}
+
+func NewGpuAttesterWithVerifier(h NvmlHandler, v AttestationVerifier) *GpuAttester {
+	if h == nil {
+		h = &DefaultNVMLHandler{}
+	}
+
+	if v == nil {
+		v = NewNRASVerifier()
+	}
+
+	return &GpuAttester{
+		nvmlHandler:         h,
+		attestationVerifier: v,
 	}
 }
 
@@ -114,105 +225,34 @@ func (g *GpuAttester) AttestRemoteEvidence(ctx context.Context, nonce []byte, ev
 		ClaimsVersion: "3.0",
 	}
 
-	jsonRequest, err := json.Marshal(request)
+	attestationResponse, err := g.attestationVerifier.RequestRemoteAttestation(ctx, &request)
 	if err != nil {
-		return nil, fmt.Errorf("failed to marshal request: %v", err)
+		return nil, fmt.Errorf("failed to request remote attestation: %v", err)
 	}
 
-	fmt.Printf("jsonRequest: %s\n", string(jsonRequest))
-
-	req, err := http.NewRequestWithContext(ctx, "POST", REMOTE_GPU_VERIFIER_URL+"/v3/attest/gpu", bytes.NewBuffer(jsonRequest))
-	if err != nil {
-		return nil, fmt.Errorf("failed to create request: %v", err)
-	}
-	req.Header.Set("Content-Type", "application/json")
-
-	response, err := http.DefaultClient.Do(req)
-	if err != nil {
-		return nil, fmt.Errorf("failed to send request: %v", err)
-	}
-
-	defer response.Body.Close()
-
-	body, err := io.ReadAll(response.Body)
-	if err != nil {
-		return nil, fmt.Errorf("failed to read response body: %v", err)
-	}
-
-	if response.StatusCode != http.StatusOK {
-		return nil, fmt.Errorf("failed to attest: %v", response.Status)
-	}
-
-	var rawResponse []interface{}
-	err = json.Unmarshal(body, &rawResponse)
-	if err != nil {
-		return nil, fmt.Errorf("failed to unmarshal response: %v", err)
-	}
-
-	if len(rawResponse) != 2 {
-		return nil, fmt.Errorf("unexpected response format")
-	}
-
-	attestResult := &GPUAttestationResponse{
-		DeviceJWTs: make(map[string]string),
-	}
-
-	jwtArray, ok := rawResponse[0].([]interface{})
-	if ok && len(jwtArray) >= 2 {
-		for _, item := range jwtArray {
-			if str, ok := item.(string); ok {
-				attestResult.JWTData = append(attestResult.JWTData, str)
-			}
-		}
-	}
-
-	gpuTokens, ok := rawResponse[1].(map[string]interface{})
-	if ok {
-		for key, value := range gpuTokens {
-			if str, ok := value.(string); ok {
-				attestResult.DeviceJWTs[key] = str
-			}
-		}
-	}
-
-	jwtToken, err := verifyJWT(ctx, attestResult.JWTData[1])
+	jwtToken, err := g.attestationVerifier.VerifyJWT(ctx, attestationResponse.JWTData[1])
 	if err != nil {
 		return nil, fmt.Errorf("failed to verify JWT: %v", err)
 	}
 
 	claims, ok := jwtToken.Claims.(jwt.MapClaims)
 	if !ok {
-		return nil, fmt.Errorf("failed to parse claims")
+		return nil, errors.New("failed to parse claims")
 	}
 
 	result, ok := claims["x-nvidia-overall-att-result"].(bool)
 	if !ok {
-		return nil, fmt.Errorf("failed to get overall attestation result")
+		return nil, errors.New("failed to get overall attestation result")
 	}
 
 	attestationResult := &AttestationResult{
 		Result:     result,
 		JWTToken:   jwtToken,
-		GPUsTokens: attestResult.DeviceJWTs,
+		GPUsTokens: attestationResponse.DeviceJWTs,
 	}
 
 	return attestationResult, nil
 }
-
-func verifyJWT(ctx context.Context, signedToken string) (*jwt.Token, error) {
-	k, err := keyfunc.NewDefaultCtx(ctx, []string{REMOTE_GPU_VERIFIER_URL + "/.well-known/jwks.json"})
-	if err != nil {
-		return nil, fmt.Errorf("failed to create a keyfunc.Keyfunc from the server's URL.\nError: %s", err)
-	}
-	parsed, err := jwt.Parse(signedToken, k.Keyfunc)
-	if err != nil {
-		return nil, fmt.Errorf("failed to parse the JWT.\nError: %s", err)
-	}
-
-	return parsed, nil
-}
-
-const REMOTE_GPU_VERIFIER_URL = "https://nras.attestation.nvidia.com"
 
 type AttestationResult struct {
 	Result     bool

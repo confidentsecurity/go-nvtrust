@@ -1,8 +1,6 @@
 module github.com/confidentsecurity/go-nvtrust
 
-go 1.23.0
-
-toolchain go1.23.4
+go 1.22.0
 
 require (
 	github.com/MicahParks/keyfunc/v3 v3.3.11
