@@ -33,37 +33,37 @@ func NewNRASVerifier() *NRASVerifier {
 func (v *NRASVerifier) RequestRemoteAttestation(ctx context.Context, request *GPUAttestationRequest) (*GPUAttestationResponse, error) {
 	jsonRequest, err := json.Marshal(request)
 	if err != nil {
-		return nil, fmt.Errorf("failed to marshal request: %v", err)
+		return nil, fmt.Errorf("failed to marshal request: %w", err)
 	}
 
 	fmt.Printf("jsonRequest: %s\n", string(jsonRequest))
 
 	req, err := http.NewRequestWithContext(ctx, "POST", v.remoteGpuVerifierURL+"/v3/attest/gpu", bytes.NewBuffer(jsonRequest))
 	if err != nil {
-		return nil, fmt.Errorf("failed to create request: %v", err)
+		return nil, fmt.Errorf("failed to create request: %w", err)
 	}
 	req.Header.Set("Content-Type", "application/json")
 
 	response, err := http.DefaultClient.Do(req)
 	if err != nil {
-		return nil, fmt.Errorf("failed to send request: %v", err)
+		return nil, fmt.Errorf("failed to send request: %w", err)
 	}
 
 	defer response.Body.Close()
 
 	body, err := io.ReadAll(response.Body)
 	if err != nil {
-		return nil, fmt.Errorf("failed to read response body: %v", err)
+		return nil, fmt.Errorf("failed to read response body: %w", err)
 	}
 
 	if response.StatusCode != http.StatusOK {
-		return nil, fmt.Errorf("failed to attest: %v", response.Status)
+		return nil, fmt.Errorf("failed to attest: %w", response.Status)
 	}
 
 	var rawResponse []any
 	err = json.Unmarshal(body, &rawResponse)
 	if err != nil {
-		return nil, fmt.Errorf("failed to unmarshal response: %v", err)
+		return nil, fmt.Errorf("failed to unmarshal response: %w", err)
 	}
 
 	if len(rawResponse) != 2 {
@@ -102,7 +102,7 @@ func (v *NRASVerifier) VerifyJWT(ctx context.Context, signedToken string) (*jwt.
 	}
 	parsed, err := jwt.Parse(signedToken, k.Keyfunc)
 	if err != nil {
-		return nil, fmt.Errorf("failed to parse the JWT.\nError: %s", err)
+		return nil, fmt.Errorf("failed to parse the JWT.\nError: %w", err)
 	}
 
 	return parsed, nil
@@ -227,12 +227,12 @@ func (g *GpuAttester) AttestRemoteEvidence(ctx context.Context, nonce []byte, ev
 
 	attestationResponse, err := g.attestationVerifier.RequestRemoteAttestation(ctx, &request)
 	if err != nil {
-		return nil, fmt.Errorf("failed to request remote attestation: %v", err)
+		return nil, fmt.Errorf("failed to request remote attestation: %w", err)
 	}
 
 	jwtToken, err := g.attestationVerifier.VerifyJWT(ctx, attestationResponse.JWTData[1])
 	if err != nil {
-		return nil, fmt.Errorf("failed to verify JWT: %v", err)
+		return nil, fmt.Errorf("failed to verify JWT: %w", err)
 	}
 
 	claims, ok := jwtToken.Claims.(jwt.MapClaims)
