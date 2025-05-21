@@ -112,42 +112,42 @@ type RemoteEvidence struct {
 	Evidence    string `json:"evidence"`
 }
 
-type GpuAdmin interface {
+type GPUAdmin interface {
 	CollectEvidence(nonce []byte) ([]GPUInfo, error)
 }
 
-type RemoteGpuAttester struct {
-	gpuAdmin            GpuAdmin
+type RemoteGPUAttester struct {
+	gpuAdmin            GPUAdmin
 	attestationVerifier AttestationVerifier
 }
 
-func NewRemoteGpuAttester(gpuAdmin GpuAdmin) *RemoteGpuAttester {
+func NewRemoteGPUAttester(gpuAdmin GPUAdmin) *RemoteGPUAttester {
 	if gpuAdmin == nil {
-		gpuAdmin = NewNvmlGpuAdmin(nil)
+		gpuAdmin = NewNvmlGPUAdmin(nil)
 	}
 
-	return &RemoteGpuAttester{
+	return &RemoteGPUAttester{
 		gpuAdmin:            gpuAdmin,
 		attestationVerifier: NewNRASVerifier(),
 	}
 }
 
-func NewRemoteGpuAttesterWithVerifier(gpuAdmin GpuAdmin, v AttestationVerifier) *RemoteGpuAttester {
+func NewRemoteGPUAttesterWithVerifier(gpuAdmin GPUAdmin, v AttestationVerifier) *RemoteGPUAttester {
 	if gpuAdmin == nil {
-		gpuAdmin = NewNvmlGpuAdmin(nil)
+		gpuAdmin = NewNvmlGPUAdmin(nil)
 	}
 
 	if v == nil {
 		v = NewNRASVerifier()
 	}
 
-	return &RemoteGpuAttester{
+	return &RemoteGPUAttester{
 		gpuAdmin:            gpuAdmin,
 		attestationVerifier: v,
 	}
 }
 
-func (g *RemoteGpuAttester) GetRemoteEvidence(nonce []byte) ([]RemoteEvidence, error) {
+func (g *RemoteGPUAttester) GetRemoteEvidence(nonce []byte) ([]RemoteEvidence, error) {
 	gpuInfos, err := g.gpuAdmin.CollectEvidence(nonce)
 
 	if err != nil {
@@ -169,7 +169,7 @@ func (g *RemoteGpuAttester) GetRemoteEvidence(nonce []byte) ([]RemoteEvidence, e
 	return evidenceList, nil
 }
 
-func (g *RemoteGpuAttester) AttestRemoteEvidence(ctx context.Context, nonce []byte, evidenceList []RemoteEvidence) (*AttestationResult, error) {
+func (g *RemoteGPUAttester) AttestRemoteEvidence(ctx context.Context, nonce []byte, evidenceList []RemoteEvidence) (*AttestationResult, error) {
 	hexString := fmt.Sprintf("%x", nonce)
 	request := GPUAttestationRequest{
 		Nonce:         hexString,

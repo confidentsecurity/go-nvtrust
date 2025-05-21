@@ -7,7 +7,7 @@ import (
 	"github.com/NVIDIA/go-nvml/pkg/nvml"
 )
 
-type NvmlGpuAdmin struct {
+type NvmlGPUAdmin struct {
 	nvmlHandler NvmlHandler
 }
 
@@ -17,17 +17,17 @@ type GPUInfo struct {
 	CertificateData       *CertChain
 }
 
-func NewNvmlGpuAdmin(h NvmlHandler) *NvmlGpuAdmin {
+func NewNvmlGPUAdmin(h NvmlHandler) *NvmlGPUAdmin {
 	if h == nil {
 		h = &DefaultNVMLHandler{}
 	}
 
-	return &NvmlGpuAdmin{
+	return &NvmlGPUAdmin{
 		nvmlHandler: h,
 	}
 }
 
-func (g *NvmlGpuAdmin) CollectEvidence(nonce []byte) ([]GPUInfo, error) {
+func (g *NvmlGPUAdmin) CollectEvidence(nonce []byte) ([]GPUInfo, error) {
 	ret := g.nvmlHandler.Init()
 
 	if ret != nvml.SUCCESS {
@@ -95,7 +95,7 @@ func (g *NvmlGpuAdmin) CollectEvidence(nonce []byte) ([]GPUInfo, error) {
 	return gpuInfos, nil
 }
 
-func (g *NvmlGpuAdmin) AllGPUsInPersistenceMode() (bool, error) {
+func (g *NvmlGPUAdmin) AllGPUInPersistenceMode() (bool, error) {
 	ret := g.nvmlHandler.Init()
 	if ret != nvml.SUCCESS {
 		return false, fmt.Errorf("unable to initialize NVML: %v", nvml.ErrorString(ret))
@@ -125,7 +125,7 @@ func (g *NvmlGpuAdmin) AllGPUsInPersistenceMode() (bool, error) {
 	return true, nil
 }
 
-func (g *NvmlGpuAdmin) IsConfidentialComputeEnabled() (bool, error) {
+func (g *NvmlGPUAdmin) IsConfidentialComputeEnabled() (bool, error) {
 	ret := g.nvmlHandler.Init()
 	if ret != nvml.SUCCESS {
 		return false, fmt.Errorf("unable to initialize NVML: %v", nvml.ErrorString(ret))
@@ -139,7 +139,7 @@ func (g *NvmlGpuAdmin) IsConfidentialComputeEnabled() (bool, error) {
 	return computeState.CcFeature == nvml.CC_SYSTEM_FEATURE_ENABLED, nil
 }
 
-func (g *NvmlGpuAdmin) IsGpuReadyStateDisabled() (bool, error) {
+func (g *NvmlGPUAdmin) IsGPUReadyStateEnabled() (bool, error) {
 	ret := g.nvmlHandler.Init()
 	if ret != nvml.SUCCESS {
 		return false, fmt.Errorf("unable to initialize NVML: %v", nvml.ErrorString(ret))
@@ -150,10 +150,10 @@ func (g *NvmlGpuAdmin) IsGpuReadyStateDisabled() (bool, error) {
 		return false, fmt.Errorf("unable to get GPU ready state: %v", nvml.ErrorString(ret))
 	}
 
-	return readyState == 0, nil
+	return readyState == 1, nil
 }
 
-func (g *NvmlGpuAdmin) EnableGpuReadyState() error {
+func (g *NvmlGPUAdmin) EnableGPUReadyState() error {
 	ret := g.nvmlHandler.Init()
 	if ret != nvml.SUCCESS {
 		return fmt.Errorf("unable to initialize NVML: %v", nvml.ErrorString(ret))

@@ -135,7 +135,7 @@ func TestCollectEvidence(t *testing.T) {
 			mockDevice: mockDevice,
 		}
 
-		admin := gonvtrust.NewNvmlGpuAdmin(mockHandler)
+		admin := gonvtrust.NewNvmlGPUAdmin(mockHandler)
 		nonce := []byte("test-nonce")
 		gpuInfos, err := admin.CollectEvidence(nonce)
 
@@ -161,7 +161,7 @@ func TestCollectEvidence(t *testing.T) {
 			},
 		}
 
-		admin := gonvtrust.NewNvmlGpuAdmin(mockHandler)
+		admin := gonvtrust.NewNvmlGPUAdmin(mockHandler)
 		nonce := []byte("test-nonce")
 		gpuInfos, err := admin.CollectEvidence(nonce)
 
@@ -177,7 +177,7 @@ func TestCollectEvidence(t *testing.T) {
 			},
 		}
 
-		admin := gonvtrust.NewNvmlGpuAdmin(mockHandler)
+		admin := gonvtrust.NewNvmlGPUAdmin(mockHandler)
 		gpuInfos, err := admin.CollectEvidence([]byte{})
 
 		require.Error(t, err)
@@ -197,7 +197,7 @@ func TestCollectEvidence(t *testing.T) {
 			},
 		}
 
-		admin := gonvtrust.NewNvmlGpuAdmin(mockHandler)
+		admin := gonvtrust.NewNvmlGPUAdmin(mockHandler)
 		gpuInfos, err := admin.CollectEvidence([]byte{})
 
 		require.Error(t, err)
@@ -220,7 +220,7 @@ func TestCollectEvidence(t *testing.T) {
 			},
 		}
 
-		admin := gonvtrust.NewNvmlGpuAdmin(mockHandler)
+		admin := gonvtrust.NewNvmlGPUAdmin(mockHandler)
 		gpuInfos, err := admin.CollectEvidence([]byte{})
 
 		require.Error(t, err)
@@ -253,7 +253,7 @@ func TestCollectEvidence(t *testing.T) {
 			mockDevice: mockDevice,
 		}
 
-		admin := gonvtrust.NewNvmlGpuAdmin(mockHandler)
+		admin := gonvtrust.NewNvmlGPUAdmin(mockHandler)
 		gpuInfos, err := admin.CollectEvidence([]byte{})
 
 		require.Error(t, err)
@@ -279,8 +279,8 @@ func TestAllGPUsInPersistenceMode(t *testing.T) {
 			mockDevice: mockDevice,
 		}
 
-		admin := gonvtrust.NewNvmlGpuAdmin(mockHandler)
-		result, err := admin.AllGPUsInPersistenceMode()
+		admin := gonvtrust.NewNvmlGPUAdmin(mockHandler)
+		result, err := admin.AllGPUInPersistenceMode()
 
 		require.NoError(t, err)
 		require.True(t, result)
@@ -309,8 +309,8 @@ func TestAllGPUsInPersistenceMode(t *testing.T) {
 			},
 		}
 
-		admin := gonvtrust.NewNvmlGpuAdmin(mockHandler)
-		result, err := admin.AllGPUsInPersistenceMode()
+		admin := gonvtrust.NewNvmlGPUAdmin(mockHandler)
+		result, err := admin.AllGPUInPersistenceMode()
 
 		require.NoError(t, err)
 		require.False(t, result)
@@ -331,7 +331,7 @@ func TestIsConfidentialComputeEnabled(t *testing.T) {
 			},
 		}
 
-		admin := gonvtrust.NewNvmlGpuAdmin(mockHandler)
+		admin := gonvtrust.NewNvmlGPUAdmin(mockHandler)
 		enabled, err := admin.IsConfidentialComputeEnabled()
 
 		require.NoError(t, err)
@@ -350,7 +350,7 @@ func TestIsConfidentialComputeEnabled(t *testing.T) {
 			},
 		}
 
-		admin := gonvtrust.NewNvmlGpuAdmin(mockHandler)
+		admin := gonvtrust.NewNvmlGPUAdmin(mockHandler)
 		enabled, err := admin.IsConfidentialComputeEnabled()
 
 		require.NoError(t, err)
@@ -358,25 +358,8 @@ func TestIsConfidentialComputeEnabled(t *testing.T) {
 	})
 }
 
-func TestIsGpuReadyStateDisabled(t *testing.T) {
+func TestIsGpuReadyStateEnabled(t *testing.T) {
 	t.Run("Success", func(t *testing.T) {
-		mockHandler := &MockNvmlHandler{
-			initFunc: func() nvml.Return {
-				return nvml.SUCCESS
-			},
-			systemGetConfComputeGpusReadyStateFunc: func() (uint32, nvml.Return) {
-				return 0, nvml.SUCCESS
-			},
-		}
-
-		admin := gonvtrust.NewNvmlGpuAdmin(mockHandler)
-		disabled, err := admin.IsGpuReadyStateDisabled()
-
-		require.NoError(t, err)
-		require.True(t, disabled)
-	})
-
-	t.Run("Enabled", func(t *testing.T) {
 		mockHandler := &MockNvmlHandler{
 			initFunc: func() nvml.Return {
 				return nvml.SUCCESS
@@ -386,11 +369,28 @@ func TestIsGpuReadyStateDisabled(t *testing.T) {
 			},
 		}
 
-		admin := gonvtrust.NewNvmlGpuAdmin(mockHandler)
-		disabled, err := admin.IsGpuReadyStateDisabled()
+		admin := gonvtrust.NewNvmlGPUAdmin(mockHandler)
+		enabled, err := admin.IsGPUReadyStateEnabled()
 
 		require.NoError(t, err)
-		require.False(t, disabled)
+		require.True(t, enabled)
+	})
+
+	t.Run("Disabled", func(t *testing.T) {
+		mockHandler := &MockNvmlHandler{
+			initFunc: func() nvml.Return {
+				return nvml.SUCCESS
+			},
+			systemGetConfComputeGpusReadyStateFunc: func() (uint32, nvml.Return) {
+				return 0, nvml.SUCCESS
+			},
+		}
+
+		admin := gonvtrust.NewNvmlGPUAdmin(mockHandler)
+		enabled, err := admin.IsGPUReadyStateEnabled()
+
+		require.NoError(t, err)
+		require.False(t, enabled)
 	})
 }
 
@@ -406,8 +406,8 @@ func TestEnableGpuReadyState(t *testing.T) {
 			},
 		}
 
-		admin := gonvtrust.NewNvmlGpuAdmin(mockHandler)
-		err := admin.EnableGpuReadyState()
+		admin := gonvtrust.NewNvmlGPUAdmin(mockHandler)
+		err := admin.EnableGPUReadyState()
 
 		require.NoError(t, err)
 	})
@@ -422,8 +422,8 @@ func TestEnableGpuReadyState(t *testing.T) {
 			},
 		}
 
-		admin := gonvtrust.NewNvmlGpuAdmin(mockHandler)
-		err := admin.EnableGpuReadyState()
+		admin := gonvtrust.NewNvmlGPUAdmin(mockHandler)
+		err := admin.EnableGPUReadyState()
 
 		require.Error(t, err)
 		require.Contains(t, err.Error(), "unable to enable GPU ready state")

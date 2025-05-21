@@ -13,12 +13,12 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-// MockGpuAdmin implements the GpuAdmin interface for testing
-type MockGpuAdmin struct {
+// MockGPUAdmin implements the GpuAdmin interface for testing
+type MockGPUAdmin struct {
 	collectEvidenceFunc func(nonce []byte) ([]gonvtrust.GPUInfo, error)
 }
 
-func (m *MockGpuAdmin) CollectEvidence(nonce []byte) ([]gonvtrust.GPUInfo, error) {
+func (m *MockGPUAdmin) CollectEvidence(nonce []byte) ([]gonvtrust.GPUInfo, error) {
 	if m.collectEvidenceFunc != nil {
 		return m.collectEvidenceFunc(nonce)
 	}
@@ -66,17 +66,17 @@ func (m *MockAttestationVerifier) VerifyJWT(ctx context.Context, signedToken str
 
 func TestRemoteGpuAttester(t *testing.T) {
 	t.Run("NewGpuAttester", func(t *testing.T) {
-		attester := gonvtrust.NewRemoteGpuAttester(nil)
+		attester := gonvtrust.NewRemoteGPUAttester(nil)
 
 		require.NotNil(t, attester)
-		require.IsType(t, &gonvtrust.RemoteGpuAttester{}, attester)
+		require.IsType(t, &gonvtrust.RemoteGPUAttester{}, attester)
 	})
 }
 
 func TestGetRemoteEvidence(t *testing.T) {
 	t.Run("Success", func(t *testing.T) {
-		mockGpuAdmin := &MockGpuAdmin{}
-		attester := gonvtrust.NewRemoteGpuAttester(mockGpuAdmin)
+		mockGpuAdmin := &MockGPUAdmin{}
+		attester := gonvtrust.NewRemoteGPUAttester(mockGpuAdmin)
 
 		evidence, err := attester.GetRemoteEvidence([]byte{})
 
@@ -86,13 +86,13 @@ func TestGetRemoteEvidence(t *testing.T) {
 	})
 
 	t.Run("CollectEvidenceFailure", func(t *testing.T) {
-		mockGpuAdmin := &MockGpuAdmin{
+		mockGpuAdmin := &MockGPUAdmin{
 			collectEvidenceFunc: func(nonce []byte) ([]gonvtrust.GPUInfo, error) {
 				return nil, fmt.Errorf("unable to initialize NVML: ERROR_UNKNOWN")
 			},
 		}
 
-		attester := gonvtrust.NewRemoteGpuAttester(mockGpuAdmin)
+		attester := gonvtrust.NewRemoteGPUAttester(mockGpuAdmin)
 
 		evidence, err := attester.GetRemoteEvidence([]byte{})
 
@@ -128,8 +128,8 @@ func TestAttestRemoteEvidence(t *testing.T) {
 			},
 		}
 
-		mockAdmin := &MockGpuAdmin{}
-		attester := gonvtrust.NewRemoteGpuAttesterWithVerifier(mockAdmin, mockVerifier)
+		mockAdmin := &MockGPUAdmin{}
+		attester := gonvtrust.NewRemoteGPUAttesterWithVerifier(mockAdmin, mockVerifier)
 		nonce := []byte("Hello, world!")
 		evidence := []gonvtrust.RemoteEvidence{
 			{
@@ -155,8 +155,8 @@ func TestAttestRemoteEvidence(t *testing.T) {
 			},
 		}
 
-		mockAdmin := &MockGpuAdmin{}
-		attester := gonvtrust.NewRemoteGpuAttesterWithVerifier(mockAdmin, mockVerifier)
+		mockAdmin := &MockGPUAdmin{}
+		attester := gonvtrust.NewRemoteGPUAttesterWithVerifier(mockAdmin, mockVerifier)
 		evidence := []gonvtrust.RemoteEvidence{
 			{
 				Certificate: "mockCertificate",
@@ -186,8 +186,8 @@ func TestAttestRemoteEvidence(t *testing.T) {
 			},
 		}
 
-		mockAdmin := &MockGpuAdmin{}
-		attester := gonvtrust.NewRemoteGpuAttesterWithVerifier(mockAdmin, mockVerifier)
+		mockAdmin := &MockGPUAdmin{}
+		attester := gonvtrust.NewRemoteGPUAttesterWithVerifier(mockAdmin, mockVerifier)
 		evidence := []gonvtrust.RemoteEvidence{
 			{
 				Certificate: "mockCertificate",
@@ -217,8 +217,8 @@ func TestAttestRemoteEvidence(t *testing.T) {
 			},
 		}
 
-		mockAdmin := &MockGpuAdmin{}
-		attester := gonvtrust.NewRemoteGpuAttesterWithVerifier(mockAdmin, mockVerifier)
+		mockAdmin := &MockGPUAdmin{}
+		attester := gonvtrust.NewRemoteGPUAttesterWithVerifier(mockAdmin, mockVerifier)
 		evidence := []gonvtrust.RemoteEvidence{
 			{
 				Certificate: "mockCertificate",
@@ -254,8 +254,8 @@ func TestAttestRemoteEvidence(t *testing.T) {
 			},
 		}
 
-		mockAdmin := &MockGpuAdmin{}
-		attester := gonvtrust.NewRemoteGpuAttesterWithVerifier(mockAdmin, mockVerifier)
+		mockAdmin := &MockGPUAdmin{}
+		attester := gonvtrust.NewRemoteGPUAttesterWithVerifier(mockAdmin, mockVerifier)
 		evidence := []gonvtrust.RemoteEvidence{
 			{
 				Certificate: "mockCertificate",
