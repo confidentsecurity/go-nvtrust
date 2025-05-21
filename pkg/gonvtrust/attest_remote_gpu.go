@@ -57,7 +57,7 @@ func (v *NRASVerifier) RequestRemoteAttestation(ctx context.Context, request *GP
 	}
 
 	if response.StatusCode != http.StatusOK {
-		return nil, fmt.Errorf("failed to attest: %w", response.Status)
+		return nil, fmt.Errorf("failed to attest: %s", response.Status)
 	}
 
 	var rawResponse []any
