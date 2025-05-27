@@ -20,7 +20,7 @@ Sample:
 
 ```
 nonce := []byte("nonce_value")
-attester := gonvtrust.NewGpuAttester(nil)
+attester := gonvtrust.NewRemoteGPUAttester(nil)
 hash := sha256.Sum256(nonce)
 evidenceList, err := attester.GetRemoteEvidence(hash[:])
 ```

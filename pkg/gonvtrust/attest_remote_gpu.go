@@ -11,7 +11,6 @@ import (
 	"net/http"
 
 	"github.com/MicahParks/keyfunc/v3"
-	"github.com/NVIDIA/go-nvml/pkg/nvml"
 	"github.com/golang-jwt/jwt/v5"
 )
 
@@ -113,110 +112,64 @@ type RemoteEvidence struct {
 	Evidence    string `json:"evidence"`
 }
 
-type GpuAttester struct {
-	nvmlHandler         NvmlHandler
+type GPUAdmin interface {
+	CollectEvidence(nonce []byte) ([]GPUInfo, error)
+}
+
+type RemoteGPUAttester struct {
+	gpuAdmin            GPUAdmin
 	attestationVerifier AttestationVerifier
 }
 
-func NewGpuAttester(h NvmlHandler) *GpuAttester {
-	if h == nil {
-		h = &DefaultNVMLHandler{}
+func NewRemoteGPUAttester(gpuAdmin GPUAdmin) *RemoteGPUAttester {
+	if gpuAdmin == nil {
+		gpuAdmin = NewNvmlGPUAdmin(nil)
 	}
 
-	return &GpuAttester{
-		nvmlHandler:         h,
+	return &RemoteGPUAttester{
+		gpuAdmin:            gpuAdmin,
 		attestationVerifier: NewNRASVerifier(),
 	}
 }
 
-func NewGpuAttesterWithVerifier(h NvmlHandler, v AttestationVerifier) *GpuAttester {
-	if h == nil {
-		h = &DefaultNVMLHandler{}
+func NewRemoteGPUAttesterWithVerifier(gpuAdmin GPUAdmin, v AttestationVerifier) *RemoteGPUAttester {
+	if gpuAdmin == nil {
+		gpuAdmin = NewNvmlGPUAdmin(nil)
 	}
 
 	if v == nil {
 		v = NewNRASVerifier()
 	}
 
-	return &GpuAttester{
-		nvmlHandler:         h,
+	return &RemoteGPUAttester{
+		gpuAdmin:            gpuAdmin,
 		attestationVerifier: v,
 	}
 }
 
-func (g *GpuAttester) GetRemoteEvidence(nonce []byte) ([]RemoteEvidence, error) {
-	ret := g.nvmlHandler.Init()
+func (g *RemoteGPUAttester) GetRemoteEvidence(nonce []byte) ([]RemoteEvidence, error) {
+	gpuInfos, err := g.gpuAdmin.CollectEvidence(nonce)
 
-	if ret != nvml.SUCCESS {
-		return nil, fmt.Errorf("unable to initialize NVML: %v", nvml.ErrorString(ret))
+	if err != nil {
+		return nil, fmt.Errorf("failed to collect evidence: %w", err)
 	}
 
-	computeState, ret := g.nvmlHandler.SystemGetConfComputeState()
-	if ret != nvml.SUCCESS {
-		return nil, fmt.Errorf("unable to get compute state: %v", nvml.ErrorString(ret))
-	}
-	if computeState.CcFeature != nvml.CC_SYSTEM_FEATURE_ENABLED {
-		return nil, errors.New("confidential computing is not enabled")
-	}
+	evidenceList := make([]RemoteEvidence, len(gpuInfos))
 
-	count, ret := g.nvmlHandler.DeviceGetCount()
-	if ret != nvml.SUCCESS {
-		return nil, fmt.Errorf("unable to get device count: %v", nvml.ErrorString(ret))
-	}
-
-	var remoteEvidence []RemoteEvidence
-
-	for i := 0; i < count; i++ {
-		device, ret := g.nvmlHandler.DeviceGetHandleByIndex(i)
-
-		if ret != nvml.SUCCESS {
-			return nil, fmt.Errorf("unable to get device at index %d: %v", i, nvml.ErrorString(ret))
-		}
-
-		deviceArchitecture, ret := device.GetArchitecture()
-
-		if ret != nvml.SUCCESS {
-			return nil, fmt.Errorf("unable to get architecture of device at index %d: %v", i, nvml.ErrorString(ret))
-		}
-
-		if deviceArchitecture != nvml.DEVICE_ARCH_HOPPER {
-			return nil, fmt.Errorf("device at index %d is not supported", i)
-		}
-
-		report, ret := device.GetConfComputeGpuAttestationReport(nonce)
-
-		if ret != nvml.SUCCESS {
-			return nil, fmt.Errorf("unable to get attestation report of device at index %d: %v", i, nvml.ErrorString(ret))
-		}
-
-		attestationReportData := report.AttestationReport[:report.AttestationReportSize]
-		encodedAttestationReport := base64.StdEncoding.EncodeToString(attestationReportData)
-
-		certificate, ret := device.GetConfComputeGpuCertificate()
-
-		if ret != nvml.SUCCESS {
-			return nil, fmt.Errorf("unable to get certificate of device at index %d: %v", i, nvml.ErrorString(ret))
-		}
-
-		attestationCertChainData := certificate.AttestationCertChain[:certificate.AttestationCertChainSize]
-		certChain := NewCertChainFromData(attestationCertChainData)
-		err := certChain.verify()
+	for i, gpuInfo := range gpuInfos {
+		encodedAttestationReport := base64.StdEncoding.EncodeToString(gpuInfo.AttestationReportData)
+		encodedCertChain, err := gpuInfo.CertificateData.encodeBase64()
 		if err != nil {
-			return nil, fmt.Errorf("failed to verify certificate chain: %v", err)
+			return nil, fmt.Errorf("failed to encode certificate chain: %w", err)
 		}
 
-		encodedCertChain, err := certChain.encodeBase64()
-		if err != nil {
-			return nil, fmt.Errorf("failed to encode certificate chain: %v", err)
-		}
-
-		remoteEvidence = append(remoteEvidence, RemoteEvidence{Evidence: encodedAttestationReport, Certificate: encodedCertChain})
+		evidenceList[i] = RemoteEvidence{Evidence: encodedAttestationReport, Certificate: encodedCertChain}
 	}
 
-	return remoteEvidence, nil
+	return evidenceList, nil
 }
 
-func (g *GpuAttester) AttestRemoteEvidence(ctx context.Context, nonce []byte, evidenceList []RemoteEvidence) (*AttestationResult, error) {
+func (g *RemoteGPUAttester) AttestRemoteEvidence(ctx context.Context, nonce []byte, evidenceList []RemoteEvidence) (*AttestationResult, error) {
 	hexString := fmt.Sprintf("%x", nonce)
 	request := GPUAttestationRequest{
 		Nonce:         hexString,

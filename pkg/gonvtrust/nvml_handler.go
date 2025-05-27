@@ -18,6 +18,8 @@ type NvmlHandler interface {
 	DeviceGetHandleByIndex(i int) (NVMLDevice, nvml.Return)
 	SystemGetDriverVersion() (string, nvml.Return)
 	SystemGetConfComputeState() (nvml.ConfComputeSystemState, nvml.Return)
+	SystemGetConfComputeGpusReadyState() (uint32, nvml.Return)
+	SystemSetConfComputeGpusReadyState(state uint32) nvml.Return
 }
 
 type DefaultNVMLHandler struct {
@@ -50,6 +52,14 @@ func (*DefaultNVMLHandler) SystemGetDriverVersion() (string, nvml.Return) {
 	return nvml.SystemGetDriverVersion()
 }
 
+func (*DefaultNVMLHandler) SystemGetConfComputeGpusReadyState() (uint32, nvml.Return) {
+	return nvml.SystemGetConfComputeGpusReadyState()
+}
+
+func (*DefaultNVMLHandler) SystemSetConfComputeGpusReadyState(state uint32) nvml.Return {
+	return nvml.SystemSetConfComputeGpusReadyState(state)
+}
+
 type NVMLDevice interface {
 	GetDevice() nvml.Device
 	GetUUID() (string, nvml.Return)
@@ -58,6 +68,7 @@ type NVMLDevice interface {
 	GetVbiosVersion() (string, nvml.Return)
 	GetConfComputeGpuAttestationReport(nonce []byte) (nvml.ConfComputeGpuAttestationReport, nvml.Return)
 	GetConfComputeGpuCertificate() (nvml.ConfComputeGpuCertificate, nvml.Return)
+	GetPersistenceMode() (nvml.EnableState, nvml.Return)
 }
 
 type DefaultNVMLDevice struct {
@@ -92,6 +103,10 @@ func (n *DefaultNVMLDevice) GetConfComputeGpuCertificate() (nvml.ConfComputeGpuC
 	return nvml.DeviceGetConfComputeGpuCertificate(n.device)
 }
 
+func (n *DefaultNVMLDevice) GetPersistenceMode() (nvml.EnableState, nvml.Return) {
+	return nvml.DeviceGetPersistenceMode(n.device)
+}
+
 type NVMLHandlerMock struct {
 }
 
@@ -115,6 +130,14 @@ func (*NVMLHandlerMock) DeviceGetHandleByIndex(int) (NVMLDevice, nvml.Return) {
 
 func (*NVMLHandlerMock) SystemGetDriverVersion() (string, nvml.Return) {
 	return "fake-driver-version", nvml.SUCCESS
+}
+
+func (*NVMLHandlerMock) SystemGetConfComputeGpusReadyState() (uint32, nvml.Return) {
+	return 0, nvml.SUCCESS
+}
+
+func (*NVMLHandlerMock) SystemSetConfComputeGpusReadyState(_ uint32) nvml.Return {
+	return nvml.SUCCESS
 }
 
 type NVMLDeviceMock struct {
@@ -160,4 +183,8 @@ func (*NVMLDeviceMock) GetConfComputeGpuCertificate() (nvml.ConfComputeGpuCertif
 		AttestationCertChainSize: uint32(len(validCertChainData)),
 	}
 	return certificate, nvml.SUCCESS
+}
+
+func (*NVMLDeviceMock) GetPersistenceMode() (nvml.EnableState, nvml.Return) {
+	return nvml.FEATURE_ENABLED, nvml.SUCCESS
 }

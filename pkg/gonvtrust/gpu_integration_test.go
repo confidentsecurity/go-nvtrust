@@ -17,7 +17,7 @@ func TestGpuAttester_GetRemoteEvidence(t *testing.T) {
 	// To run this test, use the following command:
 	// go test -tags=gpu_integration -v -run TestGpuAttester_GetRemoteEvidence
 	// This test will fail if no GPU is present.
-	attester := gonvtrust.NewGpuAttester(nil)
+	attester := gonvtrust.NewRemoteGpuAttester(nil)
 	nonce := make([]byte, 32)
 	_, err := rand.Read(nonce)
 	if err != nil {
