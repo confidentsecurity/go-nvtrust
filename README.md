@@ -12,6 +12,10 @@ A Go library for NVIDIA GPU confidential computing attestation, providing a Go i
 
 The library leverages NVIDIA's NVML (NVIDIA Management Library) through [go-nvml](https://github.com/NVIDIA/go-nvml) to interact with GPU hardware and retrieve cryptographic attestation data.
 
+## Limitations
+
+The library works only on NVIDIA Hopper H100 GPUs at the moment.
+
 ## Installation
 
 ```bash
