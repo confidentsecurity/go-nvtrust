@@ -4,7 +4,7 @@ go 1.22.0
 
 require (
 	github.com/MicahParks/keyfunc/v3 v3.3.11
-	github.com/NVIDIA/go-nvml v0.12.4-0
+	github.com/NVIDIA/go-nvml v0.13.0-1
 	github.com/golang-jwt/jwt/v5 v5.2.2
 )
 
@@ -19,5 +19,3 @@ require (
 	github.com/stretchr/testify v1.10.0
 	gopkg.in/yaml.v3 v3.0.1 // indirect
 )
-
-replace github.com/NVIDIA/go-nvml => github.com/confidentsecurity/go-nvml v0.0.0-20250113141620-97f6be2384c0
