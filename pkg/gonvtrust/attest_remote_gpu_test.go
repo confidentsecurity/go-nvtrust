@@ -5,7 +5,7 @@ import (
 	"testing"
 
 	"context"
-	"fmt"
+	"errors"
 
 	"github.com/NVIDIA/go-nvml/pkg/nvml"
 	"github.com/confidentsecurity/go-nvtrust/pkg/gonvtrust"
@@ -87,8 +87,8 @@ func TestGetRemoteEvidence(t *testing.T) {
 
 	t.Run("CollectEvidenceFailure", func(t *testing.T) {
 		mockGpuAdmin := &MockGPUAdmin{
-			collectEvidenceFunc: func(nonce []byte) ([]gonvtrust.GPUInfo, error) {
-				return nil, fmt.Errorf("unable to initialize NVML: ERROR_UNKNOWN")
+			collectEvidenceFunc: func(_ []byte) ([]gonvtrust.GPUInfo, error) {
+				return nil, errors.New("unable to initialize NVML: ERROR_UNKNOWN")
 			},
 		}
 
@@ -105,7 +105,7 @@ func TestGetRemoteEvidence(t *testing.T) {
 func TestAttestRemoteEvidence(t *testing.T) {
 	t.Run("Success", func(t *testing.T) {
 		mockVerifier := &MockAttestationVerifier{
-			requestAttestationFunc: func(ctx context.Context, request *gonvtrust.GPUAttestationRequest) (*gonvtrust.GPUAttestationResponse, error) {
+			requestAttestationFunc: func(_ context.Context, request *gonvtrust.GPUAttestationRequest) (*gonvtrust.GPUAttestationResponse, error) {
 				require.Equal(t, "48656c6c6f2c20776f726c6421", request.Nonce)
 				require.Equal(t, "HOPPER", request.Arch)
 				require.Equal(t, "3.0", request.ClaimsVersion)
@@ -118,7 +118,7 @@ func TestAttestRemoteEvidence(t *testing.T) {
 					},
 				}, nil
 			},
-			verifyJWTFunc: func(ctx context.Context, signedToken string) (*jwt.Token, error) {
+			verifyJWTFunc: func(_ context.Context, _ string) (*jwt.Token, error) {
 				mockToken := &jwt.Token{}
 				mockClaims := jwt.MapClaims{
 					"x-nvidia-overall-att-result": true,
@@ -150,8 +150,8 @@ func TestAttestRemoteEvidence(t *testing.T) {
 
 	t.Run("InvalidResponseStatus", func(t *testing.T) {
 		mockVerifier := &MockAttestationVerifier{
-			requestAttestationFunc: func(ctx context.Context, request *gonvtrust.GPUAttestationRequest) (*gonvtrust.GPUAttestationResponse, error) {
-				return nil, fmt.Errorf("failed to attest: 400 Bad Request")
+			requestAttestationFunc: func(_ context.Context, _ *gonvtrust.GPUAttestationRequest) (*gonvtrust.GPUAttestationResponse, error) {
+				return nil, errors.New("failed to attest: 400 Bad Request")
 			},
 		}
 
@@ -173,7 +173,7 @@ func TestAttestRemoteEvidence(t *testing.T) {
 
 	t.Run("JWTVerificationFailure", func(t *testing.T) {
 		mockVerifier := &MockAttestationVerifier{
-			requestAttestationFunc: func(ctx context.Context, request *gonvtrust.GPUAttestationRequest) (*gonvtrust.GPUAttestationResponse, error) {
+			requestAttestationFunc: func(_ context.Context, _ *gonvtrust.GPUAttestationRequest) (*gonvtrust.GPUAttestationResponse, error) {
 				return &gonvtrust.GPUAttestationResponse{
 					JWTData: []string{"header", "invalidJWTtoken"},
 					DeviceJWTs: map[string]string{
@@ -181,8 +181,8 @@ func TestAttestRemoteEvidence(t *testing.T) {
 					},
 				}, nil
 			},
-			verifyJWTFunc: func(ctx context.Context, signedToken string) (*jwt.Token, error) {
-				return nil, fmt.Errorf("JWT verification failed")
+			verifyJWTFunc: func(_ context.Context, _ string) (*jwt.Token, error) {
+				return nil, errors.New("JWT verification failed")
 			},
 		}
 
@@ -204,7 +204,7 @@ func TestAttestRemoteEvidence(t *testing.T) {
 
 	t.Run("InvalidClaims", func(t *testing.T) {
 		mockVerifier := &MockAttestationVerifier{
-			requestAttestationFunc: func(ctx context.Context, request *gonvtrust.GPUAttestationRequest) (*gonvtrust.GPUAttestationResponse, error) {
+			requestAttestationFunc: func(_ context.Context, _ *gonvtrust.GPUAttestationRequest) (*gonvtrust.GPUAttestationResponse, error) {
 				return &gonvtrust.GPUAttestationResponse{
 					JWTData: []string{"header", "validJWTtoken"},
 					DeviceJWTs: map[string]string{
@@ -212,7 +212,7 @@ func TestAttestRemoteEvidence(t *testing.T) {
 					},
 				}, nil
 			},
-			verifyJWTFunc: func(ctx context.Context, signedToken string) (*jwt.Token, error) {
+			verifyJWTFunc: func(_ context.Context, _ string) (*jwt.Token, error) {
 				return &jwt.Token{}, nil
 			},
 		}
@@ -235,7 +235,7 @@ func TestAttestRemoteEvidence(t *testing.T) {
 
 	t.Run("MissingAttestationResult", func(t *testing.T) {
 		mockVerifier := &MockAttestationVerifier{
-			requestAttestationFunc: func(ctx context.Context, request *gonvtrust.GPUAttestationRequest) (*gonvtrust.GPUAttestationResponse, error) {
+			requestAttestationFunc: func(_ context.Context, _ *gonvtrust.GPUAttestationRequest) (*gonvtrust.GPUAttestationResponse, error) {
 				return &gonvtrust.GPUAttestationResponse{
 					JWTData: []string{"header", "validJWTtoken"},
 					DeviceJWTs: map[string]string{
@@ -243,7 +243,7 @@ func TestAttestRemoteEvidence(t *testing.T) {
 					},
 				}, nil
 			},
-			verifyJWTFunc: func(ctx context.Context, signedToken string) (*jwt.Token, error) {
+			verifyJWTFunc: func(_ context.Context, _ string) (*jwt.Token, error) {
 				mockToken := &jwt.Token{}
 				mockClaims := jwt.MapClaims{
 					// Missing the "x-nvidia-overall-att-result" claim
