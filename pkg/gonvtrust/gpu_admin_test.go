@@ -53,7 +53,7 @@ func (m *MockNvmlHandler) DeviceGetHandleByIndex(index int) (gonvtrust.NVMLDevic
 	return m.mockDevice, nvml.SUCCESS
 }
 
-func (m *MockNvmlHandler) SystemGetDriverVersion() (string, nvml.Return) {
+func (*MockNvmlHandler) SystemGetDriverVersion() (string, nvml.Return) {
 	return "fake-driver-version", nvml.SUCCESS
 }
 
@@ -87,7 +87,7 @@ func (m *MockNvmlDevice) GetArchitecture() (nvml.DeviceArchitecture, nvml.Return
 	return m.NVMLDeviceMock.GetArchitecture()
 }
 
-func (m *MockNvmlDevice) GetConfComputeGpuAttestationReport(nonce []byte) (nvml.ConfComputeGpuAttestationReport, nvml.Return) {
+func (m *MockNvmlDevice) GetConfComputeGpuAttestationReport(_ []byte) (nvml.ConfComputeGpuAttestationReport, nvml.Return) {
 	if m.getConfComputeGpuAttestationReportFunc != nil {
 		return m.getConfComputeGpuAttestationReportFunc()
 	}
@@ -129,7 +129,7 @@ func TestCollectEvidence(t *testing.T) {
 			deviceGetCountFunc: func() (int, nvml.Return) {
 				return 1, nvml.SUCCESS
 			},
-			deviceGetHandleByIndexFunc: func(index int) (gonvtrust.NVMLDevice, nvml.Return) {
+			deviceGetHandleByIndexFunc: func(_ int) (gonvtrust.NVMLDevice, nvml.Return) {
 				return mockDevice, nvml.SUCCESS
 			},
 			mockDevice: mockDevice,
@@ -247,7 +247,7 @@ func TestCollectEvidence(t *testing.T) {
 			deviceGetCountFunc: func() (int, nvml.Return) {
 				return 1, nvml.SUCCESS
 			},
-			deviceGetHandleByIndexFunc: func(index int) (gonvtrust.NVMLDevice, nvml.Return) {
+			deviceGetHandleByIndexFunc: func(_ int) (gonvtrust.NVMLDevice, nvml.Return) {
 				return mockDevice, nvml.SUCCESS
 			},
 			mockDevice: mockDevice,
@@ -273,7 +273,7 @@ func TestAllGPUsInPersistenceMode(t *testing.T) {
 			deviceGetCountFunc: func() (int, nvml.Return) {
 				return 2, nvml.SUCCESS
 			},
-			deviceGetHandleByIndexFunc: func(index int) (gonvtrust.NVMLDevice, nvml.Return) {
+			deviceGetHandleByIndexFunc: func(_ int) (gonvtrust.NVMLDevice, nvml.Return) {
 				return mockDevice, nvml.SUCCESS
 			},
 			mockDevice: mockDevice,
@@ -417,7 +417,7 @@ func TestEnableGpuReadyState(t *testing.T) {
 			initFunc: func() nvml.Return {
 				return nvml.SUCCESS
 			},
-			systemSetConfComputeGpusReadyStateFunc: func(state uint32) nvml.Return {
+			systemSetConfComputeGpusReadyStateFunc: func(_ uint32) nvml.Return {
 				return nvml.ERROR_NOT_SUPPORTED
 			},
 		}
