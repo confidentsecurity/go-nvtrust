@@ -38,7 +38,7 @@ type MockAttestationVerifier struct {
 	requestAttestationFunc func(ctx context.Context, request *gonvtrust.GPUAttestationRequest) (*gonvtrust.GPUAttestationResponse, error)
 }
 
-func (m *MockAttestationVerifier) RequestRemoteAttestation(ctx context.Context, request *gonvtrust.GPUAttestationRequest) (*gonvtrust.GPUAttestationResponse, error) {
+func (m *MockAttestationVerifier) AttestGPU(ctx context.Context, request *gonvtrust.GPUAttestationRequest) (*gonvtrust.GPUAttestationResponse, error) {
 	if m.requestAttestationFunc != nil {
 		return m.requestAttestationFunc(ctx, request)
 	}

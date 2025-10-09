@@ -1,44 +1,64 @@
-package gonvtrust
+package gpu
 
 import (
 	"errors"
 	"fmt"
 
 	"github.com/NVIDIA/go-nvml/pkg/nvml"
+	"github.com/confidentsecurity/go-nvtrust/pkg/gonvtrust/certs"
 )
 
 type NvmlGPUAdmin struct {
 	nvmlHandler NvmlHandler
 }
 
-type GPUInfo struct {
-	Arch                  nvml.DeviceArchitecture
-	AttestationReportData []byte
-	CertificateData       *CertChain
+type GPUDevice struct {
+	arch                  nvml.DeviceArchitecture
+	attestationReportData []byte
+	certificateData       *certs.CertChain
 }
 
-func NewNvmlGPUAdmin(h NvmlHandler) *NvmlGPUAdmin {
+func (d GPUDevice) Arch() string {
+	switch d.arch {
+	case nvml.DEVICE_ARCH_HOPPER:
+		return "HOPPER"
+	case nvml.DEVICE_ARCH_BLACKWELL:
+		return "BLACKWELL"
+	}
+	return "UNSUPPORTED"
+}
+
+func (d GPUDevice) AttestationReport() []byte {
+	return d.attestationReportData
+}
+
+func (d GPUDevice) Certificate() *certs.CertChain {
+	return d.certificateData
+}
+
+func NewNvmlGPUAdmin(h NvmlHandler) (*NvmlGPUAdmin, error) {
 	if h == nil {
 		h = &DefaultNVMLHandler{}
 	}
 
-	return &NvmlGPUAdmin{
-		nvmlHandler: h,
-	}
-}
-
-func (g *NvmlGPUAdmin) CollectEvidence(nonce []byte) ([]GPUInfo, error) {
-	ret := g.nvmlHandler.Init()
+	ret := h.Init()
 
 	if ret != nvml.SUCCESS {
 		return nil, fmt.Errorf("unable to initialize NVML: %v", nvml.ErrorString(ret))
 	}
 
-	computeState, ret := g.nvmlHandler.SystemGetConfComputeState()
+	return &NvmlGPUAdmin{
+		nvmlHandler: h,
+	}, nil
+}
+
+func (g *NvmlGPUAdmin) CollectEvidence(nonce []byte) ([]GPUDevice, error) {
+	ccSettings, ret := g.nvmlHandler.SystemGetConfComputeSettings()
 	if ret != nvml.SUCCESS {
 		return nil, fmt.Errorf("unable to get compute state: %v", nvml.ErrorString(ret))
 	}
-	if computeState.CcFeature != nvml.CC_SYSTEM_FEATURE_ENABLED {
+
+	if ccSettings.CcFeature != nvml.CC_SYSTEM_FEATURE_ENABLED && ccSettings.MultiGpuMode != nvml.CC_SYSTEM_MULTIGPU_PROTECTED_PCIE {
 		return nil, errors.New("confidential computing is not enabled")
 	}
 
@@ -47,7 +67,7 @@ func (g *NvmlGPUAdmin) CollectEvidence(nonce []byte) ([]GPUInfo, error) {
 		return nil, fmt.Errorf("unable to get device count: %v", nvml.ErrorString(ret))
 	}
 
-	var gpuInfos []GPUInfo
+	var gpuInfos []GPUDevice
 
 	for i := 0; i < count; i++ {
 		device, ret := g.nvmlHandler.DeviceGetHandleByIndex(i)
@@ -62,7 +82,7 @@ func (g *NvmlGPUAdmin) CollectEvidence(nonce []byte) ([]GPUInfo, error) {
 			return nil, fmt.Errorf("unable to get architecture of device at index %d: %v", i, nvml.ErrorString(ret))
 		}
 
-		if deviceArchitecture != nvml.DEVICE_ARCH_HOPPER {
+		if deviceArchitecture != nvml.DEVICE_ARCH_HOPPER && deviceArchitecture != nvml.DEVICE_ARCH_BLACKWELL {
 			return nil, fmt.Errorf("device at index %d is not supported", i)
 		}
 
@@ -79,16 +99,16 @@ func (g *NvmlGPUAdmin) CollectEvidence(nonce []byte) ([]GPUInfo, error) {
 		}
 
 		attestationCertChainData := certificate.AttestationCertChain[:certificate.AttestationCertChainSize]
-		certChain := NewCertChainFromData(attestationCertChainData)
-		err := certChain.verify()
+		certChain := certs.NewCertChainFromData(attestationCertChainData)
+		err := certChain.Verify()
 		if err != nil {
 			return nil, fmt.Errorf("failed to verify certificate chain: %v", err)
 		}
 
-		gpuInfos = append(gpuInfos, GPUInfo{
-			Arch:                  deviceArchitecture,
-			AttestationReportData: report.AttestationReport[:report.AttestationReportSize],
-			CertificateData:       certChain,
+		gpuInfos = append(gpuInfos, GPUDevice{
+			arch:                  deviceArchitecture,
+			attestationReportData: report.AttestationReport[:report.AttestationReportSize],
+			certificateData:       certChain,
 		})
 	}
 
@@ -96,11 +116,6 @@ func (g *NvmlGPUAdmin) CollectEvidence(nonce []byte) ([]GPUInfo, error) {
 }
 
 func (g *NvmlGPUAdmin) AllGPUInPersistenceMode() (bool, error) {
-	ret := g.nvmlHandler.Init()
-	if ret != nvml.SUCCESS {
-		return false, fmt.Errorf("unable to initialize NVML: %v", nvml.ErrorString(ret))
-	}
-
 	count, ret := g.nvmlHandler.DeviceGetCount()
 	if ret != nvml.SUCCESS {
 		return false, fmt.Errorf("unable to get device count: %v", nvml.ErrorString(ret))
@@ -126,11 +141,6 @@ func (g *NvmlGPUAdmin) AllGPUInPersistenceMode() (bool, error) {
 }
 
 func (g *NvmlGPUAdmin) IsConfidentialComputeEnabled() (bool, error) {
-	ret := g.nvmlHandler.Init()
-	if ret != nvml.SUCCESS {
-		return false, fmt.Errorf("unable to initialize NVML: %v", nvml.ErrorString(ret))
-	}
-
 	computeState, ret := g.nvmlHandler.SystemGetConfComputeState()
 	if ret != nvml.SUCCESS {
 		return false, fmt.Errorf("unable to get compute state: %v", nvml.ErrorString(ret))
@@ -140,11 +150,6 @@ func (g *NvmlGPUAdmin) IsConfidentialComputeEnabled() (bool, error) {
 }
 
 func (g *NvmlGPUAdmin) IsGPUReadyStateEnabled() (bool, error) {
-	ret := g.nvmlHandler.Init()
-	if ret != nvml.SUCCESS {
-		return false, fmt.Errorf("unable to initialize NVML: %v", nvml.ErrorString(ret))
-	}
-
 	readyState, ret := g.nvmlHandler.SystemGetConfComputeGpusReadyState()
 	if ret != nvml.SUCCESS {
 		return false, fmt.Errorf("unable to get GPU ready state: %v", nvml.ErrorString(ret))
@@ -154,14 +159,18 @@ func (g *NvmlGPUAdmin) IsGPUReadyStateEnabled() (bool, error) {
 }
 
 func (g *NvmlGPUAdmin) EnableGPUReadyState() error {
-	ret := g.nvmlHandler.Init()
-	if ret != nvml.SUCCESS {
-		return fmt.Errorf("unable to initialize NVML: %v", nvml.ErrorString(ret))
-	}
-
-	ret = g.nvmlHandler.SystemSetConfComputeGpusReadyState(1)
+	ret := g.nvmlHandler.SystemSetConfComputeGpusReadyState(1)
 	if ret != nvml.SUCCESS {
 		return fmt.Errorf("unable to enable GPU ready state: %v", nvml.ErrorString(ret))
+	}
+
+	return nil
+}
+
+func (g *NvmlGPUAdmin) Shutdown() error {
+	ret := g.nvmlHandler.Shutdown()
+	if ret != nvml.SUCCESS {
+		return fmt.Errorf("unable to shutdown NVML: %v", nvml.ErrorString(ret))
 	}
 
 	return nil

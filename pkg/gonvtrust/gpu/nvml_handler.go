@@ -1,4 +1,4 @@
-package gonvtrust
+package gpu
 
 import (
 	_ "embed"
@@ -18,8 +18,10 @@ type NvmlHandler interface {
 	DeviceGetHandleByIndex(i int) (NVMLDevice, nvml.Return)
 	SystemGetDriverVersion() (string, nvml.Return)
 	SystemGetConfComputeState() (nvml.ConfComputeSystemState, nvml.Return)
+	SystemGetConfComputeSettings() (nvml.SystemConfComputeSettings, nvml.Return)
 	SystemGetConfComputeGpusReadyState() (uint32, nvml.Return)
 	SystemSetConfComputeGpusReadyState(state uint32) nvml.Return
+	Shutdown() nvml.Return
 }
 
 type DefaultNVMLHandler struct {
@@ -32,6 +34,11 @@ func (*DefaultNVMLHandler) Init() nvml.Return {
 func (*DefaultNVMLHandler) SystemGetConfComputeState() (nvml.ConfComputeSystemState, nvml.Return) {
 	computeState, ret := nvml.SystemGetConfComputeState()
 	return computeState, ret
+}
+
+func (*DefaultNVMLHandler) SystemGetConfComputeSettings() (nvml.SystemConfComputeSettings, nvml.Return) {
+	settings, ret := nvml.SystemGetConfComputeSettings()
+	return settings, ret
 }
 
 func (*DefaultNVMLHandler) DeviceGetCount() (int, nvml.Return) {
@@ -58,6 +65,10 @@ func (*DefaultNVMLHandler) SystemGetConfComputeGpusReadyState() (uint32, nvml.Re
 
 func (*DefaultNVMLHandler) SystemSetConfComputeGpusReadyState(state uint32) nvml.Return {
 	return nvml.SystemSetConfComputeGpusReadyState(state)
+}
+
+func (*DefaultNVMLHandler) Shutdown() nvml.Return {
+	return nvml.Shutdown()
 }
 
 type NVMLDevice interface {
