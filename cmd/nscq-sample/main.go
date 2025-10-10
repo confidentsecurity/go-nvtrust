@@ -84,6 +84,7 @@ func main() {
 	fmt.Printf("NVSwitch Architecture: %s\n", arch.String())
 
 	fmt.Println("Cleaning up session and unloading library...")
+	handler.Close()
 	fmt.Println("Session destroyed and library unloaded successfully")
 	fmt.Println("\nAll operations completed")
 }

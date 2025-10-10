@@ -25,6 +25,8 @@ import "C"
 import (
 	"fmt"
 	"unsafe"
+
+	"github.com/google/uuid"
 )
 
 // API Version constants
@@ -132,21 +134,6 @@ func (r Rc) Error() string {
 	default:
 		return fmt.Sprintf("error: unknown return code %d", r)
 	}
-}
-
-// UUID represents an NSCQ device UUID
-type UUID struct {
-	Bytes [16]byte
-}
-
-// String returns a string representation of the UUID
-func (u UUID) String() string {
-	return fmt.Sprintf("%02x%02x%02x%02x-%02x%02x-%02x%02x-%02x%02x-%02x%02x%02x%02x%02x%02x",
-		u.Bytes[0], u.Bytes[1], u.Bytes[2], u.Bytes[3],
-		u.Bytes[4], u.Bytes[5],
-		u.Bytes[6], u.Bytes[7],
-		u.Bytes[8], u.Bytes[9],
-		u.Bytes[10], u.Bytes[11], u.Bytes[12], u.Bytes[13], u.Bytes[14], u.Bytes[15])
 }
 
 // Label represents an NSCQ device label
@@ -275,43 +262,48 @@ type writerResult struct {
 }
 
 // Callback is a function type for path observation callbacks
-type Callback func(device *UUID, rc Rc, data interface{}, userData interface{})
+type Callback func(device *uuid.UUID, rc Rc, data any, userData any)
 
 // UUIDCallback is invoked for UUID path observations
-type UUIDCallback func(device *UUID, rc Rc, uuid *UUID, userData interface{})
+type UUIDCallback func(device *uuid.UUID, rc Rc, uuid *uuid.UUID, userData any)
 
 // ArchCallback is invoked for architecture path observations
-type ArchCallback func(device *UUID, rc Rc, arch Arch, userData interface{})
+type ArchCallback func(device *uuid.UUID, rc Rc, arch Arch, userData any)
 
 // TnvlStatusCallback is invoked for TNVL status path observations
-type TnvlStatusCallback func(device *UUID, rc Rc, status TnvlStatus, userData interface{})
+type TnvlStatusCallback func(device *uuid.UUID, rc Rc, status TnvlStatus, userData any)
 
 // AttestationReportCallback is invoked for attestation report path observations
-type AttestationReportCallback func(device *UUID, rc Rc, report AttestationReport, userData interface{})
+type AttestationReportCallback func(device *uuid.UUID, rc Rc, report AttestationReport, userData any)
 
 // AttestationCertificateCallback is invoked for certificate chain path observations
-type AttestationCertificateCallback func(device *UUID, rc Rc, cert AttestationCertificate, userData interface{})
+type AttestationCertificateCallback func(device *uuid.UUID, rc Rc, cert AttestationCertificate, userData any)
 
 // convertCUUID converts a C UUID to Go UUID
-func convertCUUID(cUUID *C.nscq_uuid_t) *UUID {
+func convertCUUID(cUUID *C.nscq_uuid_t) *uuid.UUID {
 	if cUUID == nil {
 		return nil
 	}
-	uuid := &UUID{}
+	bytesSlice := make([]byte, 16)
 	for i := 0; i < 16; i++ {
-		uuid.Bytes[i] = byte(cUUID.bytes[i])
+		bytesSlice[i] = byte(cUUID.bytes[i])
 	}
-	return uuid
+
+	goUUID, err := uuid.FromBytes(bytesSlice)
+	if err != nil {
+		return nil
+	}
+	return &goUUID
 }
 
 // convertGoUUID converts a Go UUID to C UUID
-func convertGoUUID(uuid *UUID) *C.nscq_uuid_t {
+func convertGoUUID(uuid *uuid.UUID) *C.nscq_uuid_t {
 	if uuid == nil {
 		return nil
 	}
 	cUUID := &C.nscq_uuid_t{}
 	for i := 0; i < 16; i++ {
-		cUUID.bytes[i] = C.uint8_t(uuid.Bytes[i])
+		cUUID.bytes[i] = C.uint8_t((*uuid)[i])
 	}
 	return cUUID
 }

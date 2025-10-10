@@ -25,6 +25,8 @@ package gonscq
 import "C"
 import (
 	"unsafe"
+
+	"github.com/google/uuid"
 )
 
 // Expose C callback wrapper functions as Go variables
@@ -38,7 +40,7 @@ var (
 
 //export goUUIDCallback
 func goUUIDCallback(devicePtr unsafe.Pointer, rc int8, uuidPtr, userDataPtr unsafe.Pointer) {
-	var device, uuid *UUID
+	var device, uuid *uuid.UUID
 	if devicePtr != nil {
 		device = convertCUUID((*C.nscq_uuid_t)(devicePtr))
 	}
@@ -56,7 +58,7 @@ func goUUIDCallback(devicePtr unsafe.Pointer, rc int8, uuidPtr, userDataPtr unsa
 
 //export goArchCallback
 func goArchCallback(devicePtr unsafe.Pointer, rc int8, archVal int8, userDataPtr unsafe.Pointer) {
-	var device *UUID
+	var device *uuid.UUID
 	if devicePtr != nil {
 		device = convertCUUID((*C.nscq_uuid_t)(devicePtr))
 	}
@@ -72,7 +74,7 @@ func goArchCallback(devicePtr unsafe.Pointer, rc int8, archVal int8, userDataPtr
 
 //export goTnvlStatusCallback
 func goTnvlStatusCallback(devicePtr unsafe.Pointer, rc int8, statusVal int8, userDataPtr unsafe.Pointer) {
-	var device *UUID
+	var device *uuid.UUID
 	if devicePtr != nil {
 		device = convertCUUID((*C.nscq_uuid_t)(devicePtr))
 	}

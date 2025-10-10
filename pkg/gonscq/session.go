@@ -27,6 +27,8 @@ import (
 	"runtime"
 	"sync"
 	"unsafe"
+
+	"github.com/google/uuid"
 )
 
 // SessionConfig holds configuration for creating a session
@@ -45,15 +47,15 @@ func DefaultSessionConfig() *SessionConfig {
 // callbackRegistry manages callbacks registered for path observations
 var callbackRegistry = struct {
 	sync.RWMutex
-	callbacks map[uintptr]interface{}
+	callbacks map[uintptr]any
 	nextID    uintptr
 }{
-	callbacks: make(map[uintptr]interface{}),
+	callbacks: make(map[uintptr]any),
 	nextID:    1,
 }
 
 // registerCallback stores a callback and returns its ID
-func registerCallback(cb interface{}) uintptr {
+func registerCallback(cb any) uintptr {
 	callbackRegistry.Lock()
 	defer callbackRegistry.Unlock()
 	id := callbackRegistry.nextID
@@ -63,7 +65,7 @@ func registerCallback(cb interface{}) uintptr {
 }
 
 // getCallback retrieves a callback by ID
-func getCallback(id uintptr) (interface{}, bool) {
+func getCallback(id uintptr) (any, bool) {
 	callbackRegistry.RLock()
 	defer callbackRegistry.RUnlock()
 	cb, ok := callbackRegistry.callbacks[id]
@@ -78,7 +80,7 @@ func unregisterCallback(id uintptr) {
 }
 
 // getWrapperForCallback returns the appropriate C wrapper function based on callback type
-func getWrapperForCallback(callback interface{}) (unsafe.Pointer, error) {
+func getWrapperForCallback(callback any) (unsafe.Pointer, error) {
 	switch callback.(type) {
 	case UUIDCallback:
 		return UuidCallbackWrapper, nil
@@ -96,7 +98,7 @@ func getWrapperForCallback(callback interface{}) (unsafe.Pointer, error) {
 }
 
 // ObserveWithCallback is a helper that handles callback registration, path observation, and cleanup
-func (s *Session) ObserveWithCallback(path string, callback interface{}) error {
+func (s *Session) ObserveWithCallback(path string, callback any) error {
 	wrapper, err := getWrapperForCallback(callback)
 	if err != nil {
 		return err
@@ -163,7 +165,7 @@ func (s *Session) SetInput(data []byte, flags uint32) error {
 }
 
 // UUIDToLabel converts a UUID to a label
-func UUIDToLabel(uuid *UUID, flags uint32) (*Label, error) {
+func UUIDToLabel(uuid *uuid.UUID, flags uint32) (*Label, error) {
 	if uuid == nil {
 		return nil, fmt.Errorf("uuid cannot be nil")
 	}

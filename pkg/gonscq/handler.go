@@ -16,6 +16,8 @@ package gonscq
 
 import (
 	"fmt"
+
+	"github.com/google/uuid"
 )
 
 // Handler constants
@@ -86,7 +88,7 @@ func (h *Handler) GetAllSwitchUUIDs() ([]string, error) {
 	uuids := make([]string, 0)
 	var observeErr error
 
-	callback := UUIDCallback(func(device *UUID, rc Rc, uuid *UUID, userData interface{}) {
+	callback := UUIDCallback(func(device *uuid.UUID, rc Rc, uuid *uuid.UUID, userData any) {
 		if rc.IsError() {
 			observeErr = rc
 			return
@@ -94,9 +96,11 @@ func (h *Handler) GetAllSwitchUUIDs() ([]string, error) {
 
 		if uuid != nil {
 			label, err := UUIDToLabel(uuid, 0)
-			if err == nil {
-				uuids = append(uuids, label.String())
+			if err != nil {
+				observeErr = err
+				return
 			}
+			uuids = append(uuids, label.String())
 		}
 	})
 
@@ -111,7 +115,7 @@ func (h *Handler) GetSwitchArchitecture() (Arch, error) {
 	var observeErr error
 	var deviceArch Arch
 
-	callback := ArchCallback(func(device *UUID, rc Rc, arch Arch, userData interface{}) {
+	callback := ArchCallback(func(device *uuid.UUID, rc Rc, arch Arch, userData any) {
 		if rc.IsError() {
 			observeErr = rc
 			return
@@ -135,7 +139,7 @@ func (h *Handler) GetSwitchTnvlStatus(device string) (TnvlStatus, error) {
 	var observeErr error
 	var status TnvlStatus
 
-	callback := TnvlStatusCallback(func(dev *UUID, rc Rc, tnvlStatus TnvlStatus, userData interface{}) {
+	callback := TnvlStatusCallback(func(dev *uuid.UUID, rc Rc, tnvlStatus TnvlStatus, userData any) {
 		if rc.IsError() {
 			observeErr = rc
 			return
@@ -156,7 +160,7 @@ func (h *Handler) GetAllSwitchTnvlStatus() (map[string]TnvlStatus, error) {
 	tnvlStatus := make(map[string]TnvlStatus)
 	var observeErr error
 
-	callback := TnvlStatusCallback(func(device *UUID, rc Rc, status TnvlStatus, userData interface{}) {
+	callback := TnvlStatusCallback(func(device *uuid.UUID, rc Rc, status TnvlStatus, userData any) {
 		if rc.IsError() {
 			observeErr = rc
 			return
@@ -164,9 +168,11 @@ func (h *Handler) GetAllSwitchTnvlStatus() (map[string]TnvlStatus, error) {
 
 		if device != nil {
 			label, err := UUIDToLabel(device, 0)
-			if err == nil {
-				tnvlStatus[label.String()] = status
+			if err != nil {
+				observeErr = err
+				return
 			}
+			tnvlStatus[label.String()] = status
 		}
 	})
 
@@ -201,7 +207,7 @@ func (h *Handler) GetSwitchAttestationCertificateChain(device string) ([]byte, e
 	var observeErr error
 	var certChain []byte
 
-	callback := AttestationCertificateCallback(func(dev *UUID, rc Rc, cert AttestationCertificate, userData interface{}) {
+	callback := AttestationCertificateCallback(func(dev *uuid.UUID, rc Rc, cert AttestationCertificate, userData any) {
 		if rc.IsError() {
 			observeErr = rc
 			return
@@ -222,7 +228,7 @@ func (h *Handler) GetAllSwitchAttestationCertificateChain() (map[string][]byte, 
 	certificateChains := make(map[string][]byte)
 	var observeErr error
 
-	callback := AttestationCertificateCallback(func(device *UUID, rc Rc, cert AttestationCertificate, userData interface{}) {
+	callback := AttestationCertificateCallback(func(device *uuid.UUID, rc Rc, cert AttestationCertificate, userData any) {
 		if rc.IsError() {
 			observeErr = rc
 			return
@@ -230,9 +236,11 @@ func (h *Handler) GetAllSwitchAttestationCertificateChain() (map[string][]byte, 
 
 		if device != nil {
 			label, err := UUIDToLabel(device, 0)
-			if err == nil {
-				certificateChains[label.String()] = cert.GetCertChain()
+			if err != nil {
+				observeErr = err
+				return
 			}
+			certificateChains[label.String()] = cert.GetCertChain()
 		}
 	})
 
@@ -259,7 +267,7 @@ func (h *Handler) GetSwitchAttestationReport(device string, nonce []byte) ([]byt
 	var observeErr error
 	var report []byte
 
-	callback := AttestationReportCallback(func(dev *UUID, rc Rc, attestationReport AttestationReport, userData interface{}) {
+	callback := AttestationReportCallback(func(dev *uuid.UUID, rc Rc, attestationReport AttestationReport, userData any) {
 		if rc.IsError() {
 			observeErr = rc
 			return
@@ -289,7 +297,7 @@ func (h *Handler) GetAllSwitchAttestationReport(nonce []byte) (map[string][]byte
 	attestationReports := make(map[string][]byte)
 	var observeErr error
 
-	callback := AttestationReportCallback(func(device *UUID, rc Rc, report AttestationReport, userData interface{}) {
+	callback := AttestationReportCallback(func(device *uuid.UUID, rc Rc, report AttestationReport, userData any) {
 		if rc.IsError() {
 			observeErr = rc
 			return
@@ -297,9 +305,12 @@ func (h *Handler) GetAllSwitchAttestationReport(nonce []byte) (map[string][]byte
 
 		if device != nil {
 			label, err := UUIDToLabel(device, 0)
-			if err == nil {
-				attestationReports[label.String()] = report.GetReport()
+			if err != nil {
+				observeErr = err
+				return
 			}
+
+			attestationReports[label.String()] = report.GetReport()
 		}
 	})
 
