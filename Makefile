@@ -12,9 +12,6 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-PWD := $(shell pwd)
-PKG_DIR := $(PWD)/pkg
-GEN_DIR := $(PWD)/gen
 
 .PHONY: all build test clean
 

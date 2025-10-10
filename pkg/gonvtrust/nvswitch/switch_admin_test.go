@@ -323,7 +323,7 @@ func TestCollectEvidence(t *testing.T) {
 		nonceCaptured := false
 
 		mockHandler := &MockNvSwitchHandler{
-			getSwitchAttestationReportFunc: func(device string, nonce []byte) ([]byte, error) {
+			getSwitchAttestationReportFunc: func(_ string, nonce []byte) ([]byte, error) {
 				require.Equal(t, expectedNonce, nonce)
 				nonceCaptured = true
 				return []byte("mock-report"), nil

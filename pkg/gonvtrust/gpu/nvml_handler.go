@@ -1,8 +1,6 @@
 package gpu
 
 import (
-	_ "embed"
-
 	"github.com/NVIDIA/go-nvml/pkg/nvml"
 	"github.com/confidentsecurity/go-nvtrust/pkg/gonvtrust/mocks"
 )
