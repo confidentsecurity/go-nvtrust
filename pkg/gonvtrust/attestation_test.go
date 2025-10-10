@@ -122,7 +122,7 @@ func TestAttest(t *testing.T) {
 		certChain := certs.NewCertChainFromData([]byte("mock-cert-data"))
 
 		mockAdmin := &MockDeviceAdmin{
-			collectEvidenceFunc: func(nonce []byte) ([]*MockDeviceInfo, error) {
+			collectEvidenceFunc: func(_ []byte) ([]*MockDeviceInfo, error) {
 				return []*MockDeviceInfo{
 					{
 						arch:              "HOPPER",
@@ -134,7 +134,7 @@ func TestAttest(t *testing.T) {
 		}
 
 		mockVerifier := &MockRemoteVerifier{
-			attestGPUFunc: func(ctx context.Context, request *nras.AttestationRequest) (*nras.AttestationResponse, error) {
+			attestGPUFunc: func(_ context.Context, request *nras.AttestationRequest) (*nras.AttestationResponse, error) {
 				require.Equal(t, "HOPPER", request.Arch)
 				require.Equal(t, 1, len(request.EvidenceList))
 				return &nras.AttestationResponse{
@@ -163,7 +163,7 @@ func TestAttest(t *testing.T) {
 		certChain := certs.NewCertChainFromData([]byte("mock-cert-data"))
 
 		mockAdmin := &MockDeviceAdmin{
-			collectEvidenceFunc: func(nonce []byte) ([]*MockDeviceInfo, error) {
+			collectEvidenceFunc: func(_ []byte) ([]*MockDeviceInfo, error) {
 				return []*MockDeviceInfo{
 					{
 						arch:              "BLACKWELL",
@@ -190,7 +190,7 @@ func TestAttest(t *testing.T) {
 		certChain := certs.NewCertChainFromData([]byte("mock-cert-data"))
 
 		mockAdmin := &MockDeviceAdmin{
-			collectEvidenceFunc: func(nonce []byte) ([]*MockDeviceInfo, error) {
+			collectEvidenceFunc: func(_ []byte) ([]*MockDeviceInfo, error) {
 				return []*MockDeviceInfo{
 					{
 						arch:              "LS10",
@@ -202,7 +202,7 @@ func TestAttest(t *testing.T) {
 		}
 
 		mockVerifier := &MockRemoteVerifier{
-			attestSwitchFunc: func(ctx context.Context, request *nras.AttestationRequest) (*nras.AttestationResponse, error) {
+			attestSwitchFunc: func(_ context.Context, request *nras.AttestationRequest) (*nras.AttestationResponse, error) {
 				require.Equal(t, "LS10", request.Arch)
 				return &nras.AttestationResponse{
 					JWTData: []string{"header", "validJWTtoken"},
@@ -227,7 +227,7 @@ func TestAttest(t *testing.T) {
 
 	t.Run("CollectEvidenceFailure", func(t *testing.T) {
 		mockAdmin := &MockDeviceAdmin{
-			collectEvidenceFunc: func(nonce []byte) ([]*MockDeviceInfo, error) {
+			collectEvidenceFunc: func(_ []byte) ([]*MockDeviceInfo, error) {
 				return nil, errors.New("failed to collect evidence")
 			},
 		}
@@ -244,7 +244,7 @@ func TestAttest(t *testing.T) {
 
 	t.Run("NoDevicesFound", func(t *testing.T) {
 		mockAdmin := &MockDeviceAdmin{
-			collectEvidenceFunc: func(nonce []byte) ([]*MockDeviceInfo, error) {
+			collectEvidenceFunc: func(_ []byte) ([]*MockDeviceInfo, error) {
 				return []*MockDeviceInfo{}, nil
 			},
 		}
@@ -263,7 +263,7 @@ func TestAttest(t *testing.T) {
 		certChain := certs.NewCertChainFromData([]byte("mock-cert-data"))
 
 		mockAdmin := &MockDeviceAdmin{
-			collectEvidenceFunc: func(nonce []byte) ([]*MockDeviceInfo, error) {
+			collectEvidenceFunc: func(_ []byte) ([]*MockDeviceInfo, error) {
 				return []*MockDeviceInfo{
 					{
 						arch:              "AMPERE",
@@ -288,7 +288,7 @@ func TestAttest(t *testing.T) {
 		certChain := certs.NewCertChainFromData([]byte{})
 
 		mockAdmin := &MockDeviceAdmin{
-			collectEvidenceFunc: func(nonce []byte) ([]*MockDeviceInfo, error) {
+			collectEvidenceFunc: func(_ []byte) ([]*MockDeviceInfo, error) {
 				return []*MockDeviceInfo{
 					{
 						arch:              "HOPPER",
@@ -312,7 +312,7 @@ func TestAttest(t *testing.T) {
 		certChain := certs.NewCertChainFromData([]byte("mock-cert-data"))
 
 		mockAdmin := &MockDeviceAdmin{
-			collectEvidenceFunc: func(nonce []byte) ([]*MockDeviceInfo, error) {
+			collectEvidenceFunc: func(_ []byte) ([]*MockDeviceInfo, error) {
 				return []*MockDeviceInfo{
 					{
 						arch:              "HOPPER",
@@ -324,7 +324,7 @@ func TestAttest(t *testing.T) {
 		}
 
 		mockVerifier := &MockRemoteVerifier{
-			attestGPUFunc: func(ctx context.Context, request *nras.AttestationRequest) (*nras.AttestationResponse, error) {
+			attestGPUFunc: func(_ context.Context, _ *nras.AttestationRequest) (*nras.AttestationResponse, error) {
 				return nil, errors.New("attestation service unavailable")
 			},
 		}
@@ -342,7 +342,7 @@ func TestAttest(t *testing.T) {
 		certChain := certs.NewCertChainFromData([]byte("mock-cert-data"))
 
 		mockAdmin := &MockDeviceAdmin{
-			collectEvidenceFunc: func(nonce []byte) ([]*MockDeviceInfo, error) {
+			collectEvidenceFunc: func(_ []byte) ([]*MockDeviceInfo, error) {
 				return []*MockDeviceInfo{
 					{
 						arch:              "LS10",
@@ -354,7 +354,7 @@ func TestAttest(t *testing.T) {
 		}
 
 		mockVerifier := &MockRemoteVerifier{
-			attestSwitchFunc: func(ctx context.Context, request *nras.AttestationRequest) (*nras.AttestationResponse, error) {
+			attestSwitchFunc: func(_ context.Context, _ *nras.AttestationRequest) (*nras.AttestationResponse, error) {
 				return nil, errors.New("switch attestation failed")
 			},
 		}
@@ -372,7 +372,7 @@ func TestAttest(t *testing.T) {
 		certChain := certs.NewCertChainFromData([]byte("mock-cert-data"))
 
 		mockAdmin := &MockDeviceAdmin{
-			collectEvidenceFunc: func(nonce []byte) ([]*MockDeviceInfo, error) {
+			collectEvidenceFunc: func(_ []byte) ([]*MockDeviceInfo, error) {
 				return []*MockDeviceInfo{
 					{
 						arch:              "HOPPER",
@@ -384,7 +384,7 @@ func TestAttest(t *testing.T) {
 		}
 
 		mockVerifier := &MockRemoteVerifier{
-			attestGPUFunc: func(ctx context.Context, request *nras.AttestationRequest) (*nras.AttestationResponse, error) {
+			attestGPUFunc: func(_ context.Context, _ *nras.AttestationRequest) (*nras.AttestationResponse, error) {
 				return &nras.AttestationResponse{
 					DeviceJWTs: map[string]string{},
 				}, nil
@@ -404,7 +404,7 @@ func TestAttest(t *testing.T) {
 		certChain := certs.NewCertChainFromData([]byte("mock-cert-data"))
 
 		mockAdmin := &MockDeviceAdmin{
-			collectEvidenceFunc: func(nonce []byte) ([]*MockDeviceInfo, error) {
+			collectEvidenceFunc: func(_ []byte) ([]*MockDeviceInfo, error) {
 				return []*MockDeviceInfo{
 					{
 						arch:              "HOPPER",
@@ -416,7 +416,7 @@ func TestAttest(t *testing.T) {
 		}
 
 		mockVerifier := &MockRemoteVerifier{
-			verifyJWTFunc: func(ctx context.Context, signedToken string) (*jwt.Token, error) {
+			verifyJWTFunc: func(_ context.Context, _ string) (*jwt.Token, error) {
 				return nil, errors.New("JWT verification failed")
 			},
 		}
@@ -434,7 +434,7 @@ func TestAttest(t *testing.T) {
 		certChain := certs.NewCertChainFromData([]byte("mock-cert-data"))
 
 		mockAdmin := &MockDeviceAdmin{
-			collectEvidenceFunc: func(nonce []byte) ([]*MockDeviceInfo, error) {
+			collectEvidenceFunc: func(_ []byte) ([]*MockDeviceInfo, error) {
 				return []*MockDeviceInfo{
 					{
 						arch:              "HOPPER",
@@ -446,7 +446,7 @@ func TestAttest(t *testing.T) {
 		}
 
 		mockVerifier := &MockRemoteVerifier{
-			verifyJWTFunc: func(ctx context.Context, signedToken string) (*jwt.Token, error) {
+			verifyJWTFunc: func(_ context.Context, _ string) (*jwt.Token, error) {
 				return &jwt.Token{
 					Claims: jwt.RegisteredClaims{},
 				}, nil
@@ -466,7 +466,7 @@ func TestAttest(t *testing.T) {
 		certChain := certs.NewCertChainFromData([]byte("mock-cert-data"))
 
 		mockAdmin := &MockDeviceAdmin{
-			collectEvidenceFunc: func(nonce []byte) ([]*MockDeviceInfo, error) {
+			collectEvidenceFunc: func(_ []byte) ([]*MockDeviceInfo, error) {
 				return []*MockDeviceInfo{
 					{
 						arch:              "HOPPER",
@@ -478,7 +478,7 @@ func TestAttest(t *testing.T) {
 		}
 
 		mockVerifier := &MockRemoteVerifier{
-			verifyJWTFunc: func(ctx context.Context, signedToken string) (*jwt.Token, error) {
+			verifyJWTFunc: func(_ context.Context, _ string) (*jwt.Token, error) {
 				mockToken := &jwt.Token{}
 				mockClaims := jwt.MapClaims{}
 				mockToken.Claims = mockClaims
@@ -515,7 +515,7 @@ func TestAttest(t *testing.T) {
 		}
 
 		mockVerifier := &MockRemoteVerifier{
-			attestGPUFunc: func(ctx context.Context, request *nras.AttestationRequest) (*nras.AttestationResponse, error) {
+			attestGPUFunc: func(_ context.Context, request *nras.AttestationRequest) (*nras.AttestationResponse, error) {
 				require.Equal(t, "48656c6c6f2c20776f726c6421", request.Nonce)
 				nonceCaptured = true
 				return &nras.AttestationResponse{
@@ -540,7 +540,7 @@ func TestAttest(t *testing.T) {
 		certChain := certs.NewCertChainFromData([]byte("mock-cert-data"))
 
 		mockAdmin := &MockDeviceAdmin{
-			collectEvidenceFunc: func(nonce []byte) ([]*MockDeviceInfo, error) {
+			collectEvidenceFunc: func(_ []byte) ([]*MockDeviceInfo, error) {
 				return []*MockDeviceInfo{
 					{
 						arch:              "HOPPER",
@@ -562,7 +562,7 @@ func TestAttest(t *testing.T) {
 		}
 
 		mockVerifier := &MockRemoteVerifier{
-			attestGPUFunc: func(ctx context.Context, request *nras.AttestationRequest) (*nras.AttestationResponse, error) {
+			attestGPUFunc: func(_ context.Context, request *nras.AttestationRequest) (*nras.AttestationResponse, error) {
 				require.Equal(t, 3, len(request.EvidenceList))
 				return &nras.AttestationResponse{
 					JWTData: []string{"header", "validJWTtoken"},

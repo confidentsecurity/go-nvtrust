@@ -3,6 +3,7 @@ package gonvtrust
 import (
 	"context"
 	"encoding/base64"
+	"errors"
 	"fmt"
 
 	"github.com/confidentsecurity/go-nvtrust/pkg/gonvtrust/certs"
@@ -45,7 +46,7 @@ func (a *RemoteAttester[T]) Attest(ctx context.Context, nonce []byte) (*Attestat
 		return nil, fmt.Errorf("failed to collect evidence: %w", err)
 	}
 	if len(deviceInfos) == 0 {
-		return nil, fmt.Errorf("no devices found")
+		return nil, errors.New("no devices found")
 	}
 	arch := deviceInfos[0].Arch()
 
@@ -71,10 +72,9 @@ func (a *RemoteAttester[T]) Attest(ctx context.Context, nonce []byte) (*Attestat
 	}
 
 	return a.parseAttestationResponse(ctx, attestationResponse)
-
 }
 
-func (a *RemoteAttester[T]) buildAttestationRequest(nonce []byte, arch string, deviceInfos []T) (*nras.AttestationRequest, error) {
+func (*RemoteAttester[T]) buildAttestationRequest(nonce []byte, arch string, deviceInfos []T) (*nras.AttestationRequest, error) {
 	evidenceList := make([]nras.RemoteEvidence, len(deviceInfos))
 
 	for i, deviceInfo := range deviceInfos {
@@ -96,7 +96,7 @@ func (a *RemoteAttester[T]) buildAttestationRequest(nonce []byte, arch string, d
 
 func (a *RemoteAttester[T]) parseAttestationResponse(ctx context.Context, response *nras.AttestationResponse) (*AttestationResult, error) {
 	if len(response.JWTData) < 2 {
-		return nil, fmt.Errorf("invalid JWT data")
+		return nil, errors.New("invalid JWT data")
 	}
 
 	jwtToken, err := a.verifier.VerifyJWT(ctx, response.JWTData[1])
@@ -106,11 +106,11 @@ func (a *RemoteAttester[T]) parseAttestationResponse(ctx context.Context, respon
 
 	claims, ok := jwtToken.Claims.(jwt.MapClaims)
 	if !ok {
-		return nil, fmt.Errorf("failed to parse claims")
+		return nil, errors.New("failed to parse claims")
 	}
 	result, ok := claims["x-nvidia-overall-att-result"].(bool)
 	if !ok {
-		return nil, fmt.Errorf("failed to parse overall attestation result")
+		return nil, errors.New("failed to parse overall attestation result")
 	}
 	return &AttestationResult{
 		Result:        result,

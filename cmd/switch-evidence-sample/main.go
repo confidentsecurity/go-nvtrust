@@ -54,7 +54,7 @@ func main() {
 		fmt.Printf("  UUID: %s\n", info.UUID())
 		fmt.Printf("  Architecture: %s\n", info.Arch())
 		fmt.Printf("  Attestation Report Size: %d bytes\n", len(info.AttestationReport()))
-		fmt.Printf("  Certificate Chain: Verified\n")
+		fmt.Println("  Certificate Chain: Verified")
 		fmt.Println()
 	}
 

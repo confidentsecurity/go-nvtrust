@@ -1,6 +1,7 @@
 package nvswitch
 
 import (
+	"errors"
 	"fmt"
 
 	"github.com/confidentsecurity/go-nvtrust/pkg/gonscq"
@@ -47,7 +48,7 @@ func (d SwitchDevice) Certificate() *certs.CertChain {
 
 func NewNscqSwitchAdmin(h NvSwitchHandler) (*NscqSwitchAdmin, error) {
 	if h == nil {
-		return nil, fmt.Errorf("failed to create NSCQ admin: missing nvswitch handler")
+		return nil, errors.New("failed to create NSCQ admin: missing nvswitch handler")
 	}
 
 	if err := h.Open(); err != nil {
@@ -66,7 +67,7 @@ func (s *NscqSwitchAdmin) CollectEvidence(nonce []byte) ([]SwitchDevice, error) 
 	}
 
 	if len(uuids) == 0 {
-		return nil, fmt.Errorf("no NVSwitch devices found")
+		return nil, errors.New("no NVSwitch devices found")
 	}
 
 	for _, uuid := range uuids {

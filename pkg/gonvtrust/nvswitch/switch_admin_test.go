@@ -165,7 +165,7 @@ func TestCollectEvidence(t *testing.T) {
 
 	t.Run("NotInTnvlMode", func(t *testing.T) {
 		mockHandler := &MockNvSwitchHandler{
-			isSwitchTnvlModeFunc: func(device string) (bool, error) {
+			isSwitchTnvlModeFunc: func(_ string) (bool, error) {
 				return false, nil
 			},
 		}
@@ -182,7 +182,7 @@ func TestCollectEvidence(t *testing.T) {
 
 	t.Run("TnvlModeCheckFailure", func(t *testing.T) {
 		mockHandler := &MockNvSwitchHandler{
-			isSwitchTnvlModeFunc: func(device string) (bool, error) {
+			isSwitchTnvlModeFunc: func(_ string) (bool, error) {
 				return false, errors.New("TNVL check failed")
 			},
 		}
@@ -199,7 +199,7 @@ func TestCollectEvidence(t *testing.T) {
 
 	t.Run("NotInLockMode", func(t *testing.T) {
 		mockHandler := &MockNvSwitchHandler{
-			isSwitchLockModeFunc: func(device string) (bool, error) {
+			isSwitchLockModeFunc: func(_ string) (bool, error) {
 				return false, nil
 			},
 		}
@@ -216,7 +216,7 @@ func TestCollectEvidence(t *testing.T) {
 
 	t.Run("LockModeCheckFailure", func(t *testing.T) {
 		mockHandler := &MockNvSwitchHandler{
-			isSwitchLockModeFunc: func(device string) (bool, error) {
+			isSwitchLockModeFunc: func(_ string) (bool, error) {
 				return false, errors.New("lock check failed")
 			},
 		}
@@ -250,7 +250,7 @@ func TestCollectEvidence(t *testing.T) {
 
 	t.Run("AttestationReportFailure", func(t *testing.T) {
 		mockHandler := &MockNvSwitchHandler{
-			getSwitchAttestationReportFunc: func(device string, nonce []byte) ([]byte, error) {
+			getSwitchAttestationReportFunc: func(_ string, _ []byte) ([]byte, error) {
 				return nil, errors.New("get report failed")
 			},
 		}
@@ -267,7 +267,7 @@ func TestCollectEvidence(t *testing.T) {
 
 	t.Run("CertificateChainFailure", func(t *testing.T) {
 		mockHandler := &MockNvSwitchHandler{
-			getSwitchAttestationCertificateChainFunc: func(device string) ([]byte, error) {
+			getSwitchAttestationCertificateChainFunc: func(_ string) ([]byte, error) {
 				return nil, errors.New("get cert chain failed")
 			},
 		}
@@ -284,7 +284,7 @@ func TestCollectEvidence(t *testing.T) {
 
 	t.Run("InvalidCertificateFailure", func(t *testing.T) {
 		mockHandler := &MockNvSwitchHandler{
-			getSwitchAttestationCertificateChainFunc: func(device string) ([]byte, error) {
+			getSwitchAttestationCertificateChainFunc: func(_ string) ([]byte, error) {
 				return mocks.InvalidCertChainData, nil
 			},
 		}
