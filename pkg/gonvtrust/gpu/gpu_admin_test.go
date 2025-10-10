@@ -16,6 +16,7 @@ type MockNvmlHandler struct {
 	initFunc                               func() nvml.Return
 	deviceGetCountFunc                     func() (int, nvml.Return)
 	deviceGetHandleByIndexFunc             func(index int) (gpu.NVMLDevice, nvml.Return)
+	systemGetConfComputeSettingsFunc       func() (nvml.SystemConfComputeSettings, nvml.Return)
 	systemGetConfComputeStateFunc          func() (nvml.ConfComputeSystemState, nvml.Return)
 	systemGetConfComputeGpusReadyStateFunc func() (uint32, nvml.Return)
 	systemSetConfComputeGpusReadyStateFunc func(state uint32) nvml.Return
@@ -28,6 +29,14 @@ func (m *MockNvmlHandler) Init() nvml.Return {
 	}
 
 	return m.NVMLHandlerMock.Init()
+}
+
+func (m *MockNvmlHandler) SystemGetConfComputeSettings() (nvml.SystemConfComputeSettings, nvml.Return) {
+	if m.systemGetConfComputeSettingsFunc != nil {
+		return m.systemGetConfComputeSettingsFunc()
+	}
+
+	return m.NVMLHandlerMock.SystemGetConfComputeSettings()
 }
 
 func (m *MockNvmlHandler) SystemGetConfComputeState() (nvml.ConfComputeSystemState, nvml.Return) {
@@ -121,11 +130,6 @@ func TestCollectEvidence(t *testing.T) {
 			initFunc: func() nvml.Return {
 				return nvml.SUCCESS
 			},
-			systemGetConfComputeStateFunc: func() (nvml.ConfComputeSystemState, nvml.Return) {
-				return nvml.ConfComputeSystemState{
-					CcFeature: nvml.CC_SYSTEM_FEATURE_ENABLED,
-				}, nvml.SUCCESS
-			},
 			deviceGetCountFunc: func() (int, nvml.Return) {
 				return 1, nvml.SUCCESS
 			},
@@ -135,7 +139,10 @@ func TestCollectEvidence(t *testing.T) {
 			mockDevice: mockDevice,
 		}
 
-		admin := gpu.NewNvmlGPUAdmin(mockHandler)
+		admin, err := gpu.NewNvmlGPUAdmin(mockHandler)
+		require.NoError(t, err)
+		require.NotNil(t, admin)
+
 		nonce := []byte("test-nonce")
 		gpuInfos, err := admin.CollectEvidence(nonce)
 
@@ -161,7 +168,10 @@ func TestCollectEvidence(t *testing.T) {
 			},
 		}
 
-		admin := gpu.NewNvmlGPUAdmin(mockHandler)
+		admin, err := gpu.NewNvmlGPUAdmin(mockHandler)
+		require.NoError(t, err)
+		require.NotNil(t, admin)
+
 		nonce := []byte("test-nonce")
 		gpuInfos, err := admin.CollectEvidence(nonce)
 
@@ -177,11 +187,10 @@ func TestCollectEvidence(t *testing.T) {
 			},
 		}
 
-		admin := gpu.NewNvmlGPUAdmin(mockHandler)
-		gpuInfos, err := admin.CollectEvidence([]byte{})
+		admin, err := gpu.NewNvmlGPUAdmin(mockHandler)
 
 		require.Error(t, err)
-		require.Nil(t, gpuInfos)
+		require.Nil(t, admin)
 		require.Contains(t, err.Error(), "unable to initialize NVML")
 	})
 
@@ -190,14 +199,17 @@ func TestCollectEvidence(t *testing.T) {
 			initFunc: func() nvml.Return {
 				return nvml.SUCCESS
 			},
-			systemGetConfComputeStateFunc: func() (nvml.ConfComputeSystemState, nvml.Return) {
-				return nvml.ConfComputeSystemState{
+			systemGetConfComputeSettingsFunc: func() (nvml.SystemConfComputeSettings, nvml.Return) {
+				return nvml.SystemConfComputeSettings{
 					CcFeature: nvml.CC_SYSTEM_FEATURE_DISABLED,
 				}, nvml.SUCCESS
 			},
 		}
 
-		admin := gpu.NewNvmlGPUAdmin(mockHandler)
+		admin, err := gpu.NewNvmlGPUAdmin(mockHandler)
+		require.NoError(t, err)
+		require.NotNil(t, admin)
+
 		gpuInfos, err := admin.CollectEvidence([]byte{})
 
 		require.Error(t, err)
@@ -210,17 +222,15 @@ func TestCollectEvidence(t *testing.T) {
 			initFunc: func() nvml.Return {
 				return nvml.SUCCESS
 			},
-			systemGetConfComputeStateFunc: func() (nvml.ConfComputeSystemState, nvml.Return) {
-				return nvml.ConfComputeSystemState{
-					CcFeature: nvml.CC_SYSTEM_FEATURE_ENABLED,
-				}, nvml.SUCCESS
-			},
 			deviceGetCountFunc: func() (int, nvml.Return) {
 				return 0, nvml.ERROR_NOT_SUPPORTED
 			},
 		}
 
-		admin := gpu.NewNvmlGPUAdmin(mockHandler)
+		admin, err := gpu.NewNvmlGPUAdmin(mockHandler)
+		require.NoError(t, err)
+		require.NotNil(t, admin)
+
 		gpuInfos, err := admin.CollectEvidence([]byte{})
 
 		require.Error(t, err)
@@ -239,11 +249,6 @@ func TestCollectEvidence(t *testing.T) {
 			initFunc: func() nvml.Return {
 				return nvml.SUCCESS
 			},
-			systemGetConfComputeStateFunc: func() (nvml.ConfComputeSystemState, nvml.Return) {
-				return nvml.ConfComputeSystemState{
-					CcFeature: nvml.CC_SYSTEM_FEATURE_ENABLED,
-				}, nvml.SUCCESS
-			},
 			deviceGetCountFunc: func() (int, nvml.Return) {
 				return 1, nvml.SUCCESS
 			},
@@ -253,7 +258,10 @@ func TestCollectEvidence(t *testing.T) {
 			mockDevice: mockDevice,
 		}
 
-		admin := gpu.NewNvmlGPUAdmin(mockHandler)
+		admin, err := gpu.NewNvmlGPUAdmin(mockHandler)
+		require.NoError(t, err)
+		require.NotNil(t, admin)
+
 		gpuInfos, err := admin.CollectEvidence([]byte{})
 
 		require.Error(t, err)
@@ -279,7 +287,10 @@ func TestAllGPUsInPersistenceMode(t *testing.T) {
 			mockDevice: mockDevice,
 		}
 
-		admin := gpu.NewNvmlGPUAdmin(mockHandler)
+		admin, err := gpu.NewNvmlGPUAdmin(mockHandler)
+		require.NoError(t, err)
+		require.NotNil(t, admin)
+
 		result, err := admin.AllGPUInPersistenceMode()
 
 		require.NoError(t, err)
@@ -309,7 +320,10 @@ func TestAllGPUsInPersistenceMode(t *testing.T) {
 			},
 		}
 
-		admin := gpu.NewNvmlGPUAdmin(mockHandler)
+		admin, err := gpu.NewNvmlGPUAdmin(mockHandler)
+		require.NoError(t, err)
+		require.NotNil(t, admin)
+
 		result, err := admin.AllGPUInPersistenceMode()
 
 		require.NoError(t, err)
@@ -331,7 +345,10 @@ func TestIsConfidentialComputeEnabled(t *testing.T) {
 			},
 		}
 
-		admin := gpu.NewNvmlGPUAdmin(mockHandler)
+		admin, err := gpu.NewNvmlGPUAdmin(mockHandler)
+		require.NoError(t, err)
+		require.NotNil(t, admin)
+
 		enabled, err := admin.IsConfidentialComputeEnabled()
 
 		require.NoError(t, err)
@@ -350,7 +367,10 @@ func TestIsConfidentialComputeEnabled(t *testing.T) {
 			},
 		}
 
-		admin := gpu.NewNvmlGPUAdmin(mockHandler)
+		admin, err := gpu.NewNvmlGPUAdmin(mockHandler)
+		require.NoError(t, err)
+		require.NotNil(t, admin)
+
 		enabled, err := admin.IsConfidentialComputeEnabled()
 
 		require.NoError(t, err)
@@ -369,7 +389,10 @@ func TestIsGpuReadyStateEnabled(t *testing.T) {
 			},
 		}
 
-		admin := gpu.NewNvmlGPUAdmin(mockHandler)
+		admin, err := gpu.NewNvmlGPUAdmin(mockHandler)
+		require.NoError(t, err)
+		require.NotNil(t, admin)
+
 		enabled, err := admin.IsGPUReadyStateEnabled()
 
 		require.NoError(t, err)
@@ -386,7 +409,10 @@ func TestIsGpuReadyStateEnabled(t *testing.T) {
 			},
 		}
 
-		admin := gpu.NewNvmlGPUAdmin(mockHandler)
+		admin, err := gpu.NewNvmlGPUAdmin(mockHandler)
+		require.NoError(t, err)
+		require.NotNil(t, admin)
+
 		enabled, err := admin.IsGPUReadyStateEnabled()
 
 		require.NoError(t, err)
@@ -406,8 +432,11 @@ func TestEnableGpuReadyState(t *testing.T) {
 			},
 		}
 
-		admin := gpu.NewNvmlGPUAdmin(mockHandler)
-		err := admin.EnableGPUReadyState()
+		admin, err := gpu.NewNvmlGPUAdmin(mockHandler)
+		require.NoError(t, err)
+		require.NotNil(t, admin)
+
+		err = admin.EnableGPUReadyState()
 
 		require.NoError(t, err)
 	})
@@ -422,8 +451,11 @@ func TestEnableGpuReadyState(t *testing.T) {
 			},
 		}
 
-		admin := gpu.NewNvmlGPUAdmin(mockHandler)
-		err := admin.EnableGPUReadyState()
+		admin, err := gpu.NewNvmlGPUAdmin(mockHandler)
+		require.NoError(t, err)
+		require.NotNil(t, admin)
+
+		err = admin.EnableGPUReadyState()
 
 		require.Error(t, err)
 		require.Contains(t, err.Error(), "unable to enable GPU ready state")

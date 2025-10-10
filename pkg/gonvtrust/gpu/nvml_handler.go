@@ -137,6 +137,13 @@ func (*NVMLHandlerMock) SystemGetConfComputeState() (nvml.ConfComputeSystemState
 	}, nvml.SUCCESS
 }
 
+func (*NVMLHandlerMock) SystemGetConfComputeSettings() (nvml.SystemConfComputeSettings, nvml.Return) {
+	return nvml.SystemConfComputeSettings{
+		CcFeature:    nvml.CC_SYSTEM_FEATURE_ENABLED,
+		MultiGpuMode: nvml.CC_SYSTEM_MULTIGPU_PROTECTED_PCIE,
+	}, nvml.SUCCESS
+}
+
 func (*NVMLHandlerMock) DeviceGetCount() (int, nvml.Return) {
 	return 1, nvml.SUCCESS
 }
@@ -154,6 +161,10 @@ func (*NVMLHandlerMock) SystemGetConfComputeGpusReadyState() (uint32, nvml.Retur
 }
 
 func (*NVMLHandlerMock) SystemSetConfComputeGpusReadyState(_ uint32) nvml.Return {
+	return nvml.SUCCESS
+}
+
+func (*NVMLHandlerMock) Shutdown() nvml.Return {
 	return nvml.SUCCESS
 }
 
