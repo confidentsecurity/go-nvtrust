@@ -7,9 +7,11 @@ import (
 	"crypto/rand"
 	"testing"
 
+	"github.com/confidentsecurity/go-nvtrust/pkg/gonscq"
 	"github.com/confidentsecurity/go-nvtrust/pkg/gonvtrust"
 	"github.com/confidentsecurity/go-nvtrust/pkg/gonvtrust/gpu"
 	"github.com/confidentsecurity/go-nvtrust/pkg/gonvtrust/nras"
+	"github.com/confidentsecurity/go-nvtrust/pkg/gonvtrust/nvswitch"
 	"github.com/golang-jwt/jwt/v5"
 	"github.com/stretchr/testify/require"
 )
