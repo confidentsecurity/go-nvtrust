@@ -35,6 +35,8 @@ func NewWithDefault() *library {
 func (l *library) Load() error {
 	l.mutex.Lock()
 	defer l.mutex.Unlock()
+	// Locking the thread is critical here as the dlerror() is thread local so
+	// go should not reschedule this onto another thread.
 	runtime.LockOSThread()
 	defer runtime.UnlockOSThread()
 
@@ -52,6 +54,8 @@ func (l *library) Load() error {
 func (l *library) Unload() error {
 	l.mutex.Lock()
 	defer l.mutex.Unlock()
+	// Locking the thread is critical here as the dlerror() is thread local so
+	// go should not reschedule this onto another thread.
 	runtime.LockOSThread()
 	defer runtime.UnlockOSThread()
 
