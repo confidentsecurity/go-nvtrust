@@ -31,7 +31,7 @@ import (
 
 // Expose C callback wrapper functions as Go variables
 var (
-	UuidCallbackWrapper                   = C.uuidCallbackWrapper
+	UUIDCallbackWrapper                   = C.uuidCallbackWrapper
 	ArchCallbackWrapper                   = C.archCallbackWrapper
 	TnvlStatusCallbackWrapper             = C.tnvlStatusCallbackWrapper
 	AttestationReportCallbackWrapper      = C.attestationReportCallbackWrapper
@@ -40,18 +40,18 @@ var (
 
 //export goUUIDCallback
 func goUUIDCallback(devicePtr unsafe.Pointer, rc int8, uuidPtr, userDataPtr unsafe.Pointer) {
-	var device, uuid *uuid.UUID
+	var device, deviceUUID *uuid.UUID
 	if devicePtr != nil {
 		device = convertCUUID((*C.nscq_uuid_t)(devicePtr))
 	}
 	if uuidPtr != nil {
-		uuid = convertCUUID((*C.nscq_uuid_t)(uuidPtr))
+		deviceUUID = convertCUUID((*C.nscq_uuid_t)(uuidPtr))
 	}
 
 	callbackID := uintptr(userDataPtr)
 	if cb, ok := getCallback(callbackID); ok {
 		if uuidCb, ok := cb.(UUIDCallback); ok {
-			uuidCb(device, Rc(rc), uuid, nil)
+			uuidCb(device, Rc(rc), deviceUUID, nil)
 		}
 	}
 }

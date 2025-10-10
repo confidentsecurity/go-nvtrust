@@ -265,7 +265,7 @@ type writerResult struct {
 type Callback func(device *uuid.UUID, rc Rc, data any, userData any)
 
 // UUIDCallback is invoked for UUID path observations
-type UUIDCallback func(device *uuid.UUID, rc Rc, uuid *uuid.UUID, userData any)
+type UUIDCallback func(device *uuid.UUID, rc Rc, deviceUUID *uuid.UUID, userData any)
 
 // ArchCallback is invoked for architecture path observations
 type ArchCallback func(device *uuid.UUID, rc Rc, arch Arch, userData any)
@@ -297,13 +297,13 @@ func convertCUUID(cUUID *C.nscq_uuid_t) *uuid.UUID {
 }
 
 // convertGoUUID converts a Go UUID to C UUID
-func convertGoUUID(uuid *uuid.UUID) *C.nscq_uuid_t {
-	if uuid == nil {
+func convertGoUUID(goUUID *uuid.UUID) *C.nscq_uuid_t {
+	if goUUID == nil {
 		return nil
 	}
 	cUUID := &C.nscq_uuid_t{}
 	for i := 0; i < 16; i++ {
-		cUUID.bytes[i] = C.uint8_t((*uuid)[i])
+		cUUID.bytes[i] = C.uint8_t((*goUUID)[i])
 	}
 	return cUUID
 }

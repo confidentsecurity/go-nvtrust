@@ -15,6 +15,7 @@
 package gonscq
 
 import (
+	"errors"
 	"fmt"
 
 	"github.com/google/uuid"
@@ -27,7 +28,7 @@ const (
 
 // Handler provides a high-level API for NSCQ operations
 type Handler struct {
-	library *library
+	library *Library
 	session *Session
 }
 
@@ -39,7 +40,7 @@ func NewHandler() (*Handler, error) {
 // NewHandlerWithLibrary creates a new NSCQ handler with a specific library path
 func NewHandlerWithLibrary(libPath string) (*Handler, error) {
 	// Load the NSCQ library
-	var lib *library
+	var lib *Library
 	if libPath == "" {
 		lib = NewWithDefault()
 	} else {
@@ -59,7 +60,7 @@ func (h *Handler) Open() error {
 	// Create session
 	session, err := SessionCreate(SessionCreateMountDevices)
 	if err != nil {
-		h.library.Unload()
+		_ = h.library.Unload()
 		return fmt.Errorf("failed to create session: %w", err)
 	}
 	h.session = session
@@ -72,7 +73,7 @@ func (h *Handler) Close() {
 		h.session = nil
 	}
 	if h.library != nil {
-		h.library.Unload()
+		_ = h.library.Unload()
 		h.library = nil
 	}
 }
@@ -88,14 +89,14 @@ func (h *Handler) GetAllSwitchUUIDs() ([]string, error) {
 	uuids := make([]string, 0)
 	var observeErr error
 
-	callback := UUIDCallback(func(device *uuid.UUID, rc Rc, uuid *uuid.UUID, userData any) {
+	callback := UUIDCallback(func(_ *uuid.UUID, rc Rc, deviceUUID *uuid.UUID, _ any) {
 		if rc.IsError() {
 			observeErr = rc
 			return
 		}
 
-		if uuid != nil {
-			label, err := UUIDToLabel(uuid, 0)
+		if deviceUUID != nil {
+			label, err := UUIDToLabel(deviceUUID, 0)
 			if err != nil {
 				observeErr = err
 				return
@@ -115,7 +116,7 @@ func (h *Handler) GetSwitchArchitecture() (Arch, error) {
 	var observeErr error
 	var deviceArch Arch
 
-	callback := ArchCallback(func(device *uuid.UUID, rc Rc, arch Arch, userData any) {
+	callback := ArchCallback(func(_ *uuid.UUID, rc Rc, arch Arch, _ any) {
 		if rc.IsError() {
 			observeErr = rc
 			return
@@ -133,13 +134,13 @@ func (h *Handler) GetSwitchArchitecture() (Arch, error) {
 
 func (h *Handler) GetSwitchTnvlStatus(device string) (TnvlStatus, error) {
 	if device == "" {
-		return 0, fmt.Errorf("device UUID cannot be empty")
+		return 0, errors.New("device UUID cannot be empty")
 	}
 
 	var observeErr error
 	var status TnvlStatus
 
-	callback := TnvlStatusCallback(func(dev *uuid.UUID, rc Rc, tnvlStatus TnvlStatus, userData any) {
+	callback := TnvlStatusCallback(func(_ *uuid.UUID, rc Rc, tnvlStatus TnvlStatus, _ any) {
 		if rc.IsError() {
 			observeErr = rc
 			return
@@ -160,7 +161,7 @@ func (h *Handler) GetAllSwitchTnvlStatus() (map[string]TnvlStatus, error) {
 	tnvlStatus := make(map[string]TnvlStatus)
 	var observeErr error
 
-	callback := TnvlStatusCallback(func(device *uuid.UUID, rc Rc, status TnvlStatus, userData any) {
+	callback := TnvlStatusCallback(func(device *uuid.UUID, rc Rc, status TnvlStatus, _ any) {
 		if rc.IsError() {
 			observeErr = rc
 			return
@@ -201,13 +202,13 @@ func (h *Handler) IsSwitchLockMode(device string) (bool, error) {
 
 func (h *Handler) GetSwitchAttestationCertificateChain(device string) ([]byte, error) {
 	if device == "" {
-		return nil, fmt.Errorf("device UUID cannot be empty")
+		return nil, errors.New("device UUID cannot be empty")
 	}
 
 	var observeErr error
 	var certChain []byte
 
-	callback := AttestationCertificateCallback(func(dev *uuid.UUID, rc Rc, cert AttestationCertificate, userData any) {
+	callback := AttestationCertificateCallback(func(_ *uuid.UUID, rc Rc, cert AttestationCertificate, _ any) {
 		if rc.IsError() {
 			observeErr = rc
 			return
@@ -228,7 +229,7 @@ func (h *Handler) GetAllSwitchAttestationCertificateChain() (map[string][]byte, 
 	certificateChains := make(map[string][]byte)
 	var observeErr error
 
-	callback := AttestationCertificateCallback(func(device *uuid.UUID, rc Rc, cert AttestationCertificate, userData any) {
+	callback := AttestationCertificateCallback(func(device *uuid.UUID, rc Rc, cert AttestationCertificate, _ any) {
 		if rc.IsError() {
 			observeErr = rc
 			return
@@ -253,7 +254,7 @@ func (h *Handler) GetAllSwitchAttestationCertificateChain() (map[string][]byte, 
 
 func (h *Handler) GetSwitchAttestationReport(device string, nonce []byte) ([]byte, error) {
 	if device == "" {
-		return nil, fmt.Errorf("device UUID cannot be empty")
+		return nil, errors.New("device UUID cannot be empty")
 	}
 	if len(nonce) != ExpectedNonceLength {
 		return nil, fmt.Errorf("nonce must be %d bytes, got %d", ExpectedNonceLength, len(nonce))
@@ -267,7 +268,7 @@ func (h *Handler) GetSwitchAttestationReport(device string, nonce []byte) ([]byt
 	var observeErr error
 	var report []byte
 
-	callback := AttestationReportCallback(func(dev *uuid.UUID, rc Rc, attestationReport AttestationReport, userData any) {
+	callback := AttestationReportCallback(func(_ *uuid.UUID, rc Rc, attestationReport AttestationReport, _ any) {
 		if rc.IsError() {
 			observeErr = rc
 			return
@@ -297,7 +298,7 @@ func (h *Handler) GetAllSwitchAttestationReport(nonce []byte) (map[string][]byte
 	attestationReports := make(map[string][]byte)
 	var observeErr error
 
-	callback := AttestationReportCallback(func(device *uuid.UUID, rc Rc, report AttestationReport, userData any) {
+	callback := AttestationReportCallback(func(device *uuid.UUID, rc Rc, report AttestationReport, _ any) {
 		if rc.IsError() {
 			observeErr = rc
 			return

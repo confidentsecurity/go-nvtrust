@@ -29,24 +29,24 @@ import (
 	"unsafe"
 )
 
-type library struct {
+type Library struct {
 	mutex  sync.Mutex
 	path   string
 	handle unsafe.Pointer
 }
 
-func New(path string) *library {
-	return &library{
+func New(path string) *Library {
+	return &Library{
 		path: path,
 	}
 }
 
 // NewWithDefault creates a library loader with the default NSCQ library path
-func NewWithDefault() *library {
+func NewWithDefault() *Library {
 	return New("libnvidia-nscq.so.2")
 }
 
-func (l *library) Load() error {
+func (l *Library) Load() error {
 	l.mutex.Lock()
 	defer l.mutex.Unlock()
 	// Locking the thread is critical here as the dlerror() is thread local so
@@ -65,7 +65,7 @@ func (l *library) Load() error {
 	return nil
 }
 
-func (l *library) Unload() error {
+func (l *Library) Unload() error {
 	l.mutex.Lock()
 	defer l.mutex.Unlock()
 	// Locking the thread is critical here as the dlerror() is thread local so

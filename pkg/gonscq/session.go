@@ -23,6 +23,7 @@ package gonscq
 */
 import "C"
 import (
+	"errors"
 	"fmt"
 	"runtime"
 	"sync"
@@ -83,7 +84,7 @@ func unregisterCallback(id uintptr) {
 func getWrapperForCallback(callback any) (unsafe.Pointer, error) {
 	switch callback.(type) {
 	case UUIDCallback:
-		return UuidCallbackWrapper, nil
+		return UUIDCallbackWrapper, nil
 	case ArchCallback:
 		return ArchCallbackWrapper, nil
 	case TnvlStatusCallback:
@@ -147,7 +148,7 @@ func (s *Session) Destroy() {
 // SetInput sets input data for the session (e.g., nonce for attestation reports)
 func (s *Session) SetInput(data []byte, flags uint32) error {
 	if len(data) == 0 {
-		return fmt.Errorf("input data cannot be empty")
+		return errors.New("input data cannot be empty")
 	}
 
 	rc := Rc(C.nscq_session_set_input(
@@ -165,12 +166,12 @@ func (s *Session) SetInput(data []byte, flags uint32) error {
 }
 
 // UUIDToLabel converts a UUID to a label
-func UUIDToLabel(uuid *uuid.UUID, flags uint32) (*Label, error) {
-	if uuid == nil {
-		return nil, fmt.Errorf("uuid cannot be nil")
+func UUIDToLabel(deviceUUID *uuid.UUID, flags uint32) (*Label, error) {
+	if deviceUUID == nil {
+		return nil, errors.New("uuid cannot be nil")
 	}
 
-	cUUID := convertGoUUID(uuid)
+	cUUID := convertGoUUID(deviceUUID)
 	var cLabel C.nscq_label_t
 
 	rc := Rc(C.nscq_uuid_to_label(cUUID, &cLabel, C.uint32_t(flags)))

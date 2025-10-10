@@ -35,7 +35,7 @@ func main() {
 	fmt.Println()
 
 	if len(uuids) == 0 {
-		log.Fatalf("No NVSwitch devices found")
+		log.Fatal("No NVSwitch devices found")
 	}
 
 	fmt.Println("Checking TNVL mode and lock mode for all devices...")
@@ -67,10 +67,10 @@ func main() {
 	}
 
 	if !allTnvlEnabled {
-		log.Fatalf("\nError: TNVL mode is not enabled on all devices")
+		log.Fatal("\nError: TNVL mode is not enabled on all devices")
 	}
 	if !allLocked {
-		log.Fatalf("\nError: Lock mode is not enabled on all devices")
+		log.Fatal("\nError: Lock mode is not enabled on all devices")
 	}
 
 	fmt.Println("\n All devices have TNVL mode and lock mode enabled\n")
