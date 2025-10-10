@@ -5,7 +5,7 @@ import (
 	"testing"
 
 	"github.com/confidentsecurity/go-nvtrust/pkg/gonscq"
-	"github.com/confidentsecurity/go-nvtrust/pkg/gonvtrust/gpu/mocks"
+	"github.com/confidentsecurity/go-nvtrust/pkg/gonvtrust/mocks"
 	"github.com/confidentsecurity/go-nvtrust/pkg/gonvtrust/nvswitch"
 	"github.com/stretchr/testify/require"
 )

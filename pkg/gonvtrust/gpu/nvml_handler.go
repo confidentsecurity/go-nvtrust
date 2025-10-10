@@ -4,13 +4,8 @@ import (
 	_ "embed"
 
 	"github.com/NVIDIA/go-nvml/pkg/nvml"
+	"github.com/confidentsecurity/go-nvtrust/pkg/gonvtrust/mocks"
 )
-
-//go:embed mocks/gpuAkCertChain.txt
-var validCertChainData []byte
-
-//go:embed mocks/attestationReport.txt
-var attestationReportData []byte
 
 type NvmlHandler interface {
 	Init() nvml.Return
@@ -193,22 +188,22 @@ func (*NVMLDeviceMock) GetVbiosVersion() (string, nvml.Return) {
 
 func (*NVMLDeviceMock) GetConfComputeGpuAttestationReport([]byte) (nvml.ConfComputeGpuAttestationReport, nvml.Return) {
 	var reportArray [8192]uint8
-	copy(reportArray[:], attestationReportData)
+	copy(reportArray[:], mocks.AttestationReportData)
 
 	attestationReport := nvml.ConfComputeGpuAttestationReport{
 		AttestationReport:     reportArray,
-		AttestationReportSize: uint32(len(attestationReportData)),
+		AttestationReportSize: uint32(len(mocks.AttestationReportData)),
 	}
 	return attestationReport, nvml.SUCCESS
 }
 
 func (*NVMLDeviceMock) GetConfComputeGpuCertificate() (nvml.ConfComputeGpuCertificate, nvml.Return) {
 	var certArray [5120]uint8
-	copy(certArray[:], validCertChainData)
+	copy(certArray[:], mocks.ValidCertChainData)
 
 	certificate := nvml.ConfComputeGpuCertificate{
 		AttestationCertChain:     certArray,
-		AttestationCertChainSize: uint32(len(validCertChainData)),
+		AttestationCertChainSize: uint32(len(mocks.ValidCertChainData)),
 	}
 	return certificate, nvml.SUCCESS
 }

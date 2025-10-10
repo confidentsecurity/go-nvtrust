@@ -6,7 +6,7 @@ import (
 
 	"github.com/NVIDIA/go-nvml/pkg/nvml"
 	"github.com/confidentsecurity/go-nvtrust/pkg/gonvtrust/gpu"
-	testdata "github.com/confidentsecurity/go-nvtrust/pkg/gonvtrust/gpu/mocks"
+	testdata "github.com/confidentsecurity/go-nvtrust/pkg/gonvtrust/mocks"
 	"github.com/stretchr/testify/require"
 )
 
