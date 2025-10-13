@@ -1,4 +1,4 @@
-package gonvtrust
+package certs
 
 import (
 	"bytes"
@@ -28,7 +28,7 @@ func NewCertChainFromData(chainData []byte) *CertChain {
 	return &CertChain{certs: certs}
 }
 
-func (c *CertChain) verify() error {
+func (c *CertChain) Verify() error {
 	var parsedCerts []*x509.Certificate
 
 	for _, certData := range c.certs {
@@ -62,7 +62,7 @@ func (c *CertChain) verify() error {
 	return err
 }
 
-func (c *CertChain) encodeBase64() (string, error) {
+func (c *CertChain) EncodeBase64() (string, error) {
 	var pemBuffer bytes.Buffer
 	for _, certData := range c.certs {
 		err := pem.Encode(&pemBuffer, &pem.Block{Type: "CERTIFICATE", Bytes: certData})

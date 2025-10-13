@@ -1,16 +1,9 @@
-package gonvtrust
+package gpu
 
 import (
-	_ "embed"
-
 	"github.com/NVIDIA/go-nvml/pkg/nvml"
+	"github.com/confidentsecurity/go-nvtrust/pkg/gonvtrust/mocks"
 )
-
-//go:embed mocks/gpuAkCertChain.txt
-var validCertChainData []byte
-
-//go:embed mocks/attestationReport.txt
-var attestationReportData []byte
 
 type NvmlHandler interface {
 	Init() nvml.Return
@@ -18,8 +11,10 @@ type NvmlHandler interface {
 	DeviceGetHandleByIndex(i int) (NVMLDevice, nvml.Return)
 	SystemGetDriverVersion() (string, nvml.Return)
 	SystemGetConfComputeState() (nvml.ConfComputeSystemState, nvml.Return)
+	SystemGetConfComputeSettings() (nvml.SystemConfComputeSettings, nvml.Return)
 	SystemGetConfComputeGpusReadyState() (uint32, nvml.Return)
 	SystemSetConfComputeGpusReadyState(state uint32) nvml.Return
+	Shutdown() nvml.Return
 }
 
 type DefaultNVMLHandler struct {
@@ -32,6 +27,11 @@ func (*DefaultNVMLHandler) Init() nvml.Return {
 func (*DefaultNVMLHandler) SystemGetConfComputeState() (nvml.ConfComputeSystemState, nvml.Return) {
 	computeState, ret := nvml.SystemGetConfComputeState()
 	return computeState, ret
+}
+
+func (*DefaultNVMLHandler) SystemGetConfComputeSettings() (nvml.SystemConfComputeSettings, nvml.Return) {
+	settings, ret := nvml.SystemGetConfComputeSettings()
+	return settings, ret
 }
 
 func (*DefaultNVMLHandler) DeviceGetCount() (int, nvml.Return) {
@@ -58,6 +58,10 @@ func (*DefaultNVMLHandler) SystemGetConfComputeGpusReadyState() (uint32, nvml.Re
 
 func (*DefaultNVMLHandler) SystemSetConfComputeGpusReadyState(state uint32) nvml.Return {
 	return nvml.SystemSetConfComputeGpusReadyState(state)
+}
+
+func (*DefaultNVMLHandler) Shutdown() nvml.Return {
+	return nvml.Shutdown()
 }
 
 type NVMLDevice interface {
@@ -126,6 +130,13 @@ func (*NVMLHandlerMock) SystemGetConfComputeState() (nvml.ConfComputeSystemState
 	}, nvml.SUCCESS
 }
 
+func (*NVMLHandlerMock) SystemGetConfComputeSettings() (nvml.SystemConfComputeSettings, nvml.Return) {
+	return nvml.SystemConfComputeSettings{
+		CcFeature:    nvml.CC_SYSTEM_FEATURE_ENABLED,
+		MultiGpuMode: nvml.CC_SYSTEM_MULTIGPU_PROTECTED_PCIE,
+	}, nvml.SUCCESS
+}
+
 func (*NVMLHandlerMock) DeviceGetCount() (int, nvml.Return) {
 	return 1, nvml.SUCCESS
 }
@@ -143,6 +154,10 @@ func (*NVMLHandlerMock) SystemGetConfComputeGpusReadyState() (uint32, nvml.Retur
 }
 
 func (*NVMLHandlerMock) SystemSetConfComputeGpusReadyState(_ uint32) nvml.Return {
+	return nvml.SUCCESS
+}
+
+func (*NVMLHandlerMock) Shutdown() nvml.Return {
 	return nvml.SUCCESS
 }
 
@@ -171,22 +186,22 @@ func (*NVMLDeviceMock) GetVbiosVersion() (string, nvml.Return) {
 
 func (*NVMLDeviceMock) GetConfComputeGpuAttestationReport([]byte) (nvml.ConfComputeGpuAttestationReport, nvml.Return) {
 	var reportArray [8192]uint8
-	copy(reportArray[:], attestationReportData)
+	copy(reportArray[:], mocks.AttestationReportData)
 
 	attestationReport := nvml.ConfComputeGpuAttestationReport{
 		AttestationReport:     reportArray,
-		AttestationReportSize: uint32(len(attestationReportData)),
+		AttestationReportSize: uint32(len(mocks.AttestationReportData)),
 	}
 	return attestationReport, nvml.SUCCESS
 }
 
 func (*NVMLDeviceMock) GetConfComputeGpuCertificate() (nvml.ConfComputeGpuCertificate, nvml.Return) {
 	var certArray [5120]uint8
-	copy(certArray[:], validCertChainData)
+	copy(certArray[:], mocks.ValidCertChainData)
 
 	certificate := nvml.ConfComputeGpuCertificate{
 		AttestationCertChain:     certArray,
-		AttestationCertChainSize: uint32(len(validCertChainData)),
+		AttestationCertChainSize: uint32(len(mocks.ValidCertChainData)),
 	}
 	return certificate, nvml.SUCCESS
 }
