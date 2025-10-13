@@ -24,8 +24,9 @@ func (d GPUDevice) Arch() string {
 		return "HOPPER"
 	case nvml.DEVICE_ARCH_BLACKWELL:
 		return "BLACKWELL"
+	default:
+		return "UNSUPPORTED"
 	}
-	return "UNSUPPORTED"
 }
 
 func (d GPUDevice) AttestationReport() []byte {

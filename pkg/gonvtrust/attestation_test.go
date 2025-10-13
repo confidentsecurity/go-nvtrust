@@ -516,6 +516,7 @@ func TestAttest(t *testing.T) {
 
 		mockVerifier := &MockRemoteVerifier{
 			attestGPUFunc: func(_ context.Context, request *nras.AttestationRequest) (*nras.AttestationResponse, error) {
+				// nonce is hex encoded version of "Hello, world!"
 				require.Equal(t, "48656c6c6f2c20776f726c6421", request.Nonce)
 				nonceCaptured = true
 				return &nras.AttestationResponse{

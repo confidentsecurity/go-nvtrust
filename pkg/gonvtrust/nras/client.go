@@ -4,7 +4,6 @@ import (
 	"bytes"
 	"context"
 	"encoding/json"
-	"errors"
 	"fmt"
 	"io"
 	"net/http"
@@ -70,31 +69,25 @@ func (v *Client) attest(ctx context.Context, request *AttestationRequest, url st
 		return nil, fmt.Errorf("failed to unmarshal response: %w", err)
 	}
 
-	if len(rawResponse) != 2 {
-		return nil, errors.New("unexpected response format")
+	if len(rawResponse) != EXPECTED_TOP_LEVEL_ITEMS {
+		return nil, fmt.Errorf("expected 2 elements in top-level array, but got %d", len(rawResponse))
 	}
 
 	attestResult := &AttestationResponse{
 		DeviceJWTs: make(map[string]string),
 	}
 
-	jwtArray, ok := rawResponse[0].([]any)
-	if ok && len(jwtArray) >= 2 {
-		for _, item := range jwtArray {
-			if str, ok := item.(string); ok {
-				attestResult.JWTData = append(attestResult.JWTData, str)
-			}
-		}
+	jwtArray, ok := rawResponse[0].([]string)
+	if !ok {
+		return nil, fmt.Errorf("expected first element to be an array, but got %v", rawResponse[0])
 	}
+	attestResult.JWTData = jwtArray
 
-	gpuTokens, ok := rawResponse[1].(map[string]any)
-	if ok {
-		for key, value := range gpuTokens {
-			if str, ok := value.(string); ok {
-				attestResult.DeviceJWTs[key] = str
-			}
-		}
+	gpuTokens, ok := rawResponse[1].(map[string]string)
+	if !ok {
+		return nil, fmt.Errorf("expected second element to be a map, but got %v", rawResponse[1])
 	}
+	attestResult.DeviceJWTs = gpuTokens
 
 	return attestResult, nil
 }
@@ -128,3 +121,5 @@ type RemoteEvidence struct {
 	Certificate string `json:"certificate"`
 	Evidence    string `json:"evidence"`
 }
+
+const EXPECTED_TOP_LEVEL_ITEMS = 2
