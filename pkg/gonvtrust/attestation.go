@@ -95,7 +95,7 @@ func (*RemoteAttester[T]) buildAttestationRequest(nonce []byte, arch string, dev
 }
 
 func (a *RemoteAttester[T]) parseAttestationResponse(ctx context.Context, response *nras.AttestationResponse) (*AttestationResult, error) {
-	if len(response.JWTData) < EXPECTED_JWT_ARRAY_ITEMS {
+	if len(response.JWTData) < ExpectJWTArrayItems {
 		return nil, errors.New("invalid JWT data")
 	}
 
@@ -125,4 +125,4 @@ type AttestationResult struct {
 	DevicesTokens map[string]string
 }
 
-const EXPECTED_JWT_ARRAY_ITEMS = 2
+const ExpectJWTArrayItems = 2

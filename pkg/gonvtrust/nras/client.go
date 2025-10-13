@@ -69,7 +69,7 @@ func (v *Client) attest(ctx context.Context, request *AttestationRequest, url st
 		return nil, fmt.Errorf("failed to unmarshal response: %w", err)
 	}
 
-	if len(rawResponse) != EXPECTED_TOP_LEVEL_ITEMS {
+	if len(rawResponse) != ExpectedTopLevelItems {
 		return nil, fmt.Errorf("expected 2 elements in top-level array, but got %d", len(rawResponse))
 	}
 
@@ -122,4 +122,4 @@ type RemoteEvidence struct {
 	Evidence    string `json:"evidence"`
 }
 
-const EXPECTED_TOP_LEVEL_ITEMS = 2
+const ExpectedTopLevelItems = 2
