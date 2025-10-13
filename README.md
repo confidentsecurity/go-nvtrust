@@ -1,20 +1,25 @@
 # go-nvtrust
 
-A Go library for NVIDIA GPU confidential computing attestation, providing a Go implementation inspired by [nvidia/nvtrust](https://github.com/nvidia/nvtrust). This library enables secure attestation of NVIDIA GPU(H100) with Confidential Computing capabilities.
+A Go library for NVIDIA GPU and NVSwitch confidential computing attestation, providing a Go implementation inspired by [nvidia/nvtrust](https://github.com/nvidia/nvtrust). This library enables secure attestation of NVIDIA GPUs (Hopper, Blackwell) and NVSwitch devices with Confidential Computing capabilities.
 
 ## Overview
 
 `go-nvtrust` provides a comprehensive solution for:
 
-- Collecting attestation evidence from NVIDIA GPUs
-- Verifying GPU attestation reports through NVIDIA Remote Attestation Service (NRAS)
-- Enabling confidential computing
+- Collecting attestation evidence from NVIDIA GPUs and NVSwitch devices
+- Verifying attestation reports through NVIDIA Remote Attestation Service (NRAS)
+- Enabling confidential computing workflows
+- Go bindings for libnvidia-nscq (NVSwitch attestation library)
 
-The library leverages NVIDIA's NVML (NVIDIA Management Library) through [go-nvml](https://github.com/NVIDIA/go-nvml) to interact with GPU hardware and retrieve cryptographic attestation data.
+The library leverages:
 
-## Limitations
+- NVIDIA's NVML (NVIDIA Management Library) through [go-nvml](https://github.com/NVIDIA/go-nvml) for GPU attestation
+- NVIDIA's libnvidia-nscq for NVSwitch attestation
 
-The library works only on NVIDIA Hopper H100 GPUs at the moment.
+## Supported Hardware
+
+- **GPUs**: NVIDIA Hopper (H100), Blackwell architectures
+- **NVSwitch**: LS10 architecture
 
 ## Installation
 
@@ -24,71 +29,108 @@ go get github.com/confidentsecurity/go-nvtrust
 
 ## Quick Start
 
-### Complete Attestation with Verification
+### Attestation
 
 ```go
-package main
-
-import (
-    "context"
-    "crypto/sha256"
-    "fmt"
-    "log"
-
-    "github.com/confidentsecurity/go-nvtrust/pkg/gonvtrust"
-)
-
-func main() {
-    nonce := []byte("attestation-nonce")
-    hash := sha256.Sum256(nonce)
-
-    // Create attester
-    attester := gonvtrust.NewRemoteGPUAttester(nil)
-
-    // Step 1: Collect evidence from local GPUs
-    evidenceList, err := attester.GetRemoteEvidence(hash[:])
-    if err != nil {
-        log.Fatalf("Failed to collect evidence: %v", err)
+    ctx := context.Background()
+    nonce := make([]byte, 32)
+    if _, err := rand.Read(nonce); err != nil {
+        log.Fatalf("Failed to generate nonce: %v", err)
     }
 
-    // Step 2: Verify evidence remotely via NVIDIA's service
-    ctx := context.Background()
-    result, err := attester.AttestRemoteEvidence(ctx, hash[:], evidenceList)
+    nrasClient := nras.NewNRASClient(http.DefaultClient)
+
+    // Create GPU admin and attester
+    gpuAdmin, err := gpu.NewNvmlGPUAdmin(nil)
     if err != nil {
-        log.Fatalf("Failed to verify evidence: %v", err)
+        log.Fatalf("Failed to create GPU admin: %v", err)
+    }
+    defer gpuAdmin.Shutdown()
+
+    // Attest GPUs
+    attester := gonvtrust.NewRemoteAttester(gpuAdmin, nrasClient)
+    result, err := attester.Attest(ctx, nonce)
+    if err != nil {
+        log.Fatalf("Failed to attest: %v", err)
+    }
+    if result.Result {
+        fmt.Println("GPU attestation successful - GPUs are trusted")
+        fmt.Printf("Verified %d GPU(s)\n", len(result.DevicesTokens))
+    } else {
+        fmt.Println("GPU attestation failed")
+    }
+
+    // Attest NVSwitches
+    attester = gonvtrust.NewRemoteAttester(switchAdmin, nrasClient)
+    result, err = attester.Attest(ctx, nonce)
+    if err != nil {
+        log.Fatalf("Failed to attest: %v", err)
     }
 
     if result.Result {
-        fmt.Println("GPU attestation successful - GPUs are trusted")
-        fmt.Printf("Verified %d GPU(s)\n", len(result.GPUsTokens))
+        fmt.Println("NVSwitch attestation successful - switches are trusted")
+        fmt.Printf("Verified %d NVSwitch(es)\n", len(result.DevicesTokens))
     } else {
-        fmt.Println("GPU attestation failed - GPUs are not trusted")
+        fmt.Println("NVSwitch attestation failed")
     }
+
+```
+
+## API Reference
+
+### Core Attestation API
+
+#### RemoteAttester[T DeviceInfo]
+
+Generic attester for both GPU and NVSwitch devices.
+
+- `NewRemoteAttester[T DeviceInfo](admin DeviceAdmin[T], verifier RemoteVerifier) *RemoteAttester[T]` - Creates a new remote attester
+- `Attest(ctx context.Context, nonce []byte) (*AttestationResult, error)` - Collects evidence and verifies it remotely
+
+#### AttestationResult
+
+```go
+type AttestationResult struct {
+    Result        bool              // Overall attestation result
+    JWTToken      *jwt.Token        // JWT token from NRAS
+    DevicesTokens map[string]string // Individual device tokens
 }
 ```
 
-## Tests
-
-### Key Methods
-
-#### RemoteGPUAttester
-
-Allows to retrieve the attestation evidence from the GPUs and verify it remotely via NVIDIA's service.
-
-- `NewRemoteGPUAttester(gpuAdmin GPUAdmin) *RemoteGPUAttester`
-- `GetRemoteEvidence(nonce []byte) ([]RemoteEvidence, error)`
-- `AttestRemoteEvidence(ctx context.Context, nonce []byte, evidenceList []RemoteEvidence) (*AttestationResult, error)`
+### GPU Administration
 
 #### NvmlGPUAdmin
 
-Allows to manage the GPU.
+Manages NVIDIA GPU attestation through NVML.
 
-- `NewNvmlGPUAdmin(handler NvmlHandler) *NvmlGPUAdmin`
-- `CollectEvidence(nonce []byte) ([]GPUInfo, error)`
-- `IsConfidentialComputeEnabled() (bool, error)`
-- `IsGPUReadyStateEnabled() (bool, error)`
-- `EnableGPUReadyState() error`
-- `AllGPUInPersistenceMode() (bool, error)`
+- `NewNvmlGPUAdmin(handler NvmlHandler) (*NvmlGPUAdmin, error)` - Creates a new GPU admin
+- `CollectEvidence(nonce []byte) ([]GPUDevice, error)` - Collects attestation evidence from all GPUs
+- `IsConfidentialComputeEnabled() (bool, error)` - Checks if confidential compute is enabled
+- `IsGPUReadyStateEnabled() (bool, error)` - Checks if GPU ready state is enabled
+- `EnableGPUReadyState() error` - Enables GPU ready state
+- `AllGPUInPersistenceMode() (bool, error)` - Checks if all GPUs are in persistence mode
+- `Shutdown() error` - Shuts down the NVML library
+
+### NVSwitch Administration
+
+#### NscqSwitchAdmin
+
+Manages NVSwitch attestation through libnvidia-nscq.
+
+- `NewNscqSwitchAdmin(handler NvSwitchHandler) (*NscqSwitchAdmin, error)` - Creates a new switch admin
+- `CollectEvidence(nonce []byte) ([]SwitchDevice, error)` - Collects attestation evidence from all switches
+- `Shutdown() error` - Shuts down the NSCQ library
+
+### NRAS Client
+
+#### NRASClient
+
+Client for communicating with NVIDIA Remote Attestation Service.
+
+- `NewNRASClient(httpClient *http.Client) *NRASClient` - Creates a new NRAS client
+- `AttestGPU(ctx context.Context, request *AttestationRequest) (*AttestationResponse, error)` - Attests GPU evidence
+- `AttestSwitch(ctx context.Context, request *AttestationRequest) (*AttestationResponse, error)` - Attests switch evidence
+- `VerifyJWT(ctx context.Context, signedToken string) (*jwt.Token, error)` - Verifies JWT token from NRAS
 
 ## Testing
 
