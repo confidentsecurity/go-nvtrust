@@ -60,6 +60,15 @@ func (d SwitchDevice) Certificate() *certs.CertChain {
 	return d.certificateData
 }
 
+func NewSwitchDevice(uuid string, arch gonscq.Arch, report []byte, cert *certs.CertChain) SwitchDevice {
+	return SwitchDevice{
+		uuid:                  uuid,
+		arch:                  arch,
+		attestationReportData: report,
+		certificateData:       cert,
+	}
+}
+
 func NewNscqSwitchAdmin(h NvSwitchHandler) (*NscqSwitchAdmin, error) {
 	if h == nil {
 		return nil, errors.New("failed to create NSCQ admin: missing nvswitch handler")

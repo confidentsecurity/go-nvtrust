@@ -51,6 +51,14 @@ func (d GPUDevice) Certificate() *certs.CertChain {
 	return d.certificateData
 }
 
+func NewGPUDevice(arch nvml.DeviceArchitecture, report []byte, cert *certs.CertChain) GPUDevice {
+	return GPUDevice{
+		arch:                  arch,
+		attestationReportData: report,
+		certificateData:       cert,
+	}
+}
+
 func NewNvmlGPUAdmin(h NvmlHandler) (*NvmlGPUAdmin, error) {
 	if h == nil {
 		h = &DefaultNVMLHandler{}
