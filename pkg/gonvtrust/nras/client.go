@@ -77,29 +77,31 @@ func (v *Client) attest(ctx context.Context, request *AttestationRequest, url st
 		return nil, fmt.Errorf("failed to attest: %s", response.Status)
 	}
 
-	var rawResponse []any
-	err = json.Unmarshal(body, &rawResponse)
+	var arrayResponse []json.RawMessage
+	err = json.Unmarshal(body, &arrayResponse)
 	if err != nil {
 		return nil, fmt.Errorf("failed to unmarshal response: %w", err)
 	}
 
-	if len(rawResponse) != ExpectedTopLevelItems {
-		return nil, fmt.Errorf("expected 2 elements in top-level array, but got %d", len(rawResponse))
+	if len(arrayResponse) != ExpectedTopLevelItems {
+		return nil, fmt.Errorf("expected 2 elements in top-level array, but got %d", len(arrayResponse))
 	}
 
 	attestResult := &AttestationResponse{
 		DeviceJWTs: make(map[string]string),
 	}
 
-	jwtArray, ok := rawResponse[0].([]string)
-	if !ok {
-		return nil, fmt.Errorf("expected first element to be an array, but got %v", rawResponse[0])
+	var jwtArray []string
+	err = json.Unmarshal(arrayResponse[0], &jwtArray)
+	if err != nil {
+		return nil, fmt.Errorf("expected first element to be an array of strings, but got error: %w", err)
 	}
 	attestResult.JWTData = jwtArray
 
-	gpuTokens, ok := rawResponse[1].(map[string]string)
-	if !ok {
-		return nil, fmt.Errorf("expected second element to be a map, but got %v", rawResponse[1])
+	var gpuTokens map[string]string
+	err = json.Unmarshal(arrayResponse[1], &gpuTokens)
+	if err != nil {
+		return nil, fmt.Errorf("expected second element to be a map of strings, but got error: %w", err)
 	}
 	attestResult.DeviceJWTs = gpuTokens
 
