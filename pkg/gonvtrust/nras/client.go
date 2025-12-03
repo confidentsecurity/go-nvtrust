@@ -21,10 +21,17 @@ import (
 	"fmt"
 	"io"
 	"net/http"
+	"time"
 
 	"github.com/MicahParks/keyfunc/v3"
 	"github.com/golang-jwt/jwt/v5"
 )
+
+// jwtLeeway is the clock skew tolerance for JWT validation.
+// This allows tokens to be valid slightly before their "not before" (nbf) time
+// and slightly after their expiration (exp) time to account for clock drift
+// between systems (including the NRAS server and the downstream client).
+const jwtLeeway = 10 * time.Second
 
 type Client struct {
 	remoteGpuVerifierURL string
@@ -113,9 +120,11 @@ func (v *Client) VerifyJWT(ctx context.Context, signedToken string) (*jwt.Token,
 	if err != nil {
 		return nil, fmt.Errorf("failed to create a keyfunc.Keyfunc from the server's URL.\nError: %s", err)
 	}
-	parsed, err := jwt.Parse(signedToken, k.Keyfunc)
+	parsed, err := jwt.Parse(signedToken, k.Keyfunc, jwt.WithLeeway(jwtLeeway))
 	if err != nil {
-		return nil, fmt.Errorf("failed to parse the JWT.\nError: %w", err)
+		// jwt.Parse may return a non-nil token even if it fails validation.
+		// Bubble up the (busted) token for later inspection.
+		return parsed, fmt.Errorf("failed to parse the JWT.\nError: %w", err)
 	}
 
 	return parsed, nil
