@@ -440,7 +440,8 @@ func TestAttest(t *testing.T) {
 		result, err := attester.Attest(context.Background(), []byte("nonce"))
 
 		require.Error(t, err)
-		require.Nil(t, result)
+		require.NotNil(t, result)
+		require.Nil(t, result.JWTToken)
 		require.Contains(t, err.Error(), "failed to verify JWT")
 	})
 
