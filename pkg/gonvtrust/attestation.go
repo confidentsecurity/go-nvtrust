@@ -115,7 +115,7 @@ func (a *RemoteAttester[T]) parseAttestationResponse(ctx context.Context, respon
 
 	jwtToken, err := a.verifier.VerifyJWT(ctx, response.JWTData[1])
 	if err != nil {
-		return nil, fmt.Errorf("failed to verify JWT: %w", err)
+		return &AttestationResult{JWTToken: jwtToken}, fmt.Errorf("failed to verify JWT: %w", err)
 	}
 
 	claims, ok := jwtToken.Claims.(jwt.MapClaims)
