@@ -17,7 +17,7 @@ import (
 
 func main() {
 	fmt.Println("NVSwitch Evidence Collection Sample")
-	fmt.Println("====================================\n")
+	fmt.Println("====================================")
 
 	// Create switch admin
 	fmt.Println("Creating NVSwitch admin...")
@@ -30,7 +30,7 @@ func main() {
 		log.Fatalf("Failed to create switch admin: %v", err)
 	}
 	defer switchAdmin.Shutdown()
-	fmt.Println("Switch admin created successfully\n")
+	fmt.Println("Switch admin created successfully")
 
 	// Generate a random nonce (32 bytes)
 	nonce := make([]byte, 32)

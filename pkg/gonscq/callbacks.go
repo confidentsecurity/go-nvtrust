@@ -48,7 +48,9 @@ func goUUIDCallback(devicePtr unsafe.Pointer, rc int8, uuidPtr, userDataPtr unsa
 		deviceUUID = convertCUUID((*C.nscq_uuid_t)(uuidPtr))
 	}
 
-	callbackID := uintptr(userDataPtr)
+	uintPointerID := (*uint)(userDataPtr)
+	callbackID := *uintPointerID
+
 	if cb, ok := getCallback(callbackID); ok {
 		if uuidCb, ok := cb.(UUIDCallback); ok {
 			uuidCb(device, Rc(rc), deviceUUID, nil)
@@ -64,7 +66,8 @@ func goArchCallback(devicePtr unsafe.Pointer, rc int8, archVal int8, userDataPtr
 	}
 	arch := Arch(archVal)
 
-	callbackID := uintptr(userDataPtr)
+	uintPointerID := (*uint)(userDataPtr)
+	callbackID := *uintPointerID
 	if cb, ok := getCallback(callbackID); ok {
 		if archCb, ok := cb.(ArchCallback); ok {
 			archCb(device, Rc(rc), arch, nil)
@@ -80,7 +83,8 @@ func goTnvlStatusCallback(devicePtr unsafe.Pointer, rc int8, statusVal int8, use
 	}
 	status := TnvlStatus(statusVal)
 
-	callbackID := uintptr(userDataPtr)
+	uintPointerID := (*uint)(userDataPtr)
+	callbackID := *uintPointerID
 	if cb, ok := getCallback(callbackID); ok {
 		if statusCb, ok := cb.(TnvlStatusCallback); ok {
 			statusCb(device, Rc(rc), status, nil)
@@ -93,7 +97,8 @@ func goAttestationReportCallback(devicePtr unsafe.Pointer, rc int8, cReport C.ns
 	report := convertCAttestationReport(&cReport)
 	device := convertCUUID((*C.nscq_uuid_t)(devicePtr))
 
-	callbackID := uintptr(userDataPtr)
+	uintPointerID := (*uint)(userDataPtr)
+	callbackID := *uintPointerID
 	if cb, ok := getCallback(callbackID); ok {
 		if reportCb, ok := cb.(AttestationReportCallback); ok {
 			reportCb(device, Rc(rc), report, nil)
@@ -106,7 +111,8 @@ func goAttestationCertificateCallback(devicePtr unsafe.Pointer, rc int8, cCert C
 	device := convertCUUID((*C.nscq_uuid_t)(devicePtr))
 	cert := convertCAttestationCertificate(&cCert)
 
-	callbackID := uintptr(userDataPtr)
+	uintPointerID := (*uint)(userDataPtr)
+	callbackID := *uintPointerID
 	if cb, ok := getCallback(callbackID); ok {
 		if certCb, ok := cb.(AttestationCertificateCallback); ok {
 			certCb(device, Rc(rc), cert, nil)

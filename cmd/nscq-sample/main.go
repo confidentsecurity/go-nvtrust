@@ -9,7 +9,7 @@ import (
 
 func main() {
 	fmt.Println("NSCQ Sample Application")
-	fmt.Println("=======================\n")
+	fmt.Println("=======================")
 
 	fmt.Println("Loading NSCQ library and creating session...")
 	handler, err := gonscq.NewHandler()
@@ -21,7 +21,7 @@ func main() {
 		log.Fatalf("Failed to open handler: %v", err)
 	}
 	defer handler.Close()
-	fmt.Println("Library loaded and session created successfully\n")
+	fmt.Println("Library loaded and session created successfully")
 
 	fmt.Println("Querying all NVSwitch UUIDs...")
 	uuids, err := handler.GetAllSwitchUUIDs()
@@ -56,7 +56,7 @@ func main() {
 
 		isLockMode, err := handler.IsSwitchLockMode(deviceUUID)
 		if err != nil {
-			log.Fatalf("Failed to check lock mode for device %s: %v (return code: %v)", deviceUUID, err)
+			log.Fatalf("Failed to check lock mode for device %s: %v", deviceUUID, err)
 		}
 		if !isLockMode {
 			fmt.Printf("Lock mode is NOT enabled on device %s\n", deviceUUID)
@@ -73,7 +73,7 @@ func main() {
 		log.Fatal("\nError: Lock mode is not enabled on all devices")
 	}
 
-	fmt.Println("\n All devices have TNVL mode and lock mode enabled\n")
+	fmt.Println("\n All devices have TNVL mode and lock mode enabled")
 
 	fmt.Println("Querying NVSwitch architecture...")
 	arch, err := handler.GetSwitchArchitecture()
