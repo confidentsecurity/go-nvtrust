@@ -64,5 +64,4 @@ func TestPointerMath(t *testing.T) {
 	callable()
 
 	require.Equal(t, cbID, realID)
-
 }
