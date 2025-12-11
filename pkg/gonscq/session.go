@@ -48,15 +48,15 @@ func DefaultSessionConfig() *SessionConfig {
 // callbackRegistry manages callbacks registered for path observations
 var callbackRegistry = struct {
 	sync.RWMutex
-	callbacks map[uintptr]any
-	nextID    uintptr
+	callbacks map[uint]any
+	nextID    uint
 }{
-	callbacks: make(map[uintptr]any),
+	callbacks: make(map[uint]any),
 	nextID:    1,
 }
 
 // registerCallback stores a callback and returns its ID
-func registerCallback(cb any) uintptr {
+func registerCallback(cb any) uint {
 	callbackRegistry.Lock()
 	defer callbackRegistry.Unlock()
 	id := callbackRegistry.nextID
@@ -66,7 +66,7 @@ func registerCallback(cb any) uintptr {
 }
 
 // getCallback retrieves a callback by ID
-func getCallback(id uintptr) (any, bool) {
+func getCallback(id uint) (any, bool) {
 	callbackRegistry.RLock()
 	defer callbackRegistry.RUnlock()
 	cb, ok := callbackRegistry.callbacks[id]
@@ -74,7 +74,7 @@ func getCallback(id uintptr) (any, bool) {
 }
 
 // unregisterCallback removes a callback
-func unregisterCallback(id uintptr) {
+func unregisterCallback(id uint) {
 	callbackRegistry.Lock()
 	defer callbackRegistry.Unlock()
 	delete(callbackRegistry.callbacks, id)
@@ -108,7 +108,7 @@ func (s *Session) ObserveWithCallback(path string, callback any) error {
 	callbackID := registerCallback(callback)
 	defer unregisterCallback(callbackID)
 
-	return s.PathObserve(path, wrapper, unsafe.Pointer(callbackID), 0)
+	return s.PathObserve(path, wrapper, unsafe.Pointer(&callbackID), 0)
 }
 
 // SessionCreate creates a new NSCQ session
